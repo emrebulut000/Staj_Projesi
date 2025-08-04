@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yemekhane Menüsü - Kullanıcı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .selected-yes {
+            border-color: #10b981;
+            background-color: #ecfdf5;
+        }
+        .selected-no {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .today-highlight {
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🍽️</span>
+                    <h1 class="text-xl font-semibold text-gray-900">Yemekhane Menüsü</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600" id="userName"></span>
+                    <button class="text-blue-600 hover:text-blue-800" onclick="logout()">Çıkış</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="flex gap-2">
+                    <button onclick="setActiveView('daily')" id="daily-btn" class="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white">
+                        Günlük
+                    </button>
+                    <button onclick="setActiveView('weekly')" id="weekly-btn" class="px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100">
+                        Haftalık
+                    </button>
+                    <button onclick="setActiveView('monthly')" id="monthly-btn" class="px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100">
+                        Aylık
+                    </button>
+                </div>
+
+                <div class="bg-blue-100 px-4 py-2 rounded-lg">
+                    <span class="text-blue-800 font-medium" id="selected-count">
+                        Seçilen günler: 0
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-center space-x-4 mb-6">
+                <button onclick="navigateDate(-1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">
+                    ← Önceki
+                </button>
+                <span class="text-lg font-semibold text-gray-800" id="current-period"></span>
+                <button onclick="navigateDate(1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">
+                    Sonraki →
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-8" id="menu-container">
+            <!-- Menü kartları buraya gelecek -->
+        </div>
+
+        <div class="text-center">
+            <button onclick="saveSelections()" id="save-btn" class="bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-3 rounded-lg font-semibold shadow-lg" disabled>
+                Seçimlerimi Kaydet (0 gün)
+            </button>
+        </div>
+
+        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="font-medium text-blue-900 mb-2">💡 Bilgilendirme</h3>
+            <ul class="text-sm text-blue-800 space-y-1">
+                <li>• Yemekhane servisi 7 gün 24 saat hizmet vermektedir</li>
+                <li>• Öğle yemeği servisi: 12:00-14:00 saatleri arasında</li>
+                <li>• Seçimlerinizi en geç bir gün önceden yapmanız gerekmektedir</li>
+                <li>• Menü değişiklikleri olabilir, güncel menü için sayfayı yenileyin</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let activeView = 'daily';
+        let currentDate = new Date();
+        let attendanceSelections = {};
+
+        // Sayfa yüklendiğinde çalışacak
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadMenuData();
+            updateSelectionCount();
+        });
+
+        // Yetki kontrolü
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('userName').textContent = username || 'Kullanıcı';
+        }
+
+        // Menü verilerini yükle
+        async function loadMenuData() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/menu/${formatDate(currentDate)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Menü verisi alınamadı');
+                }
+
+                const data = await response.json();
+                updateDisplay(data);
+            } catch (error) {
+                console.error("Menü verisi yüklenirken hata:", error);
+                document.getElementById('menu-container').innerHTML = 
+                    '<p class="text-red-500 text-center">Menü verisi yüklenemedi. Lütfen daha sonra tekrar deneyin.</p>';
+            }
+        }
+
+        // Seçimleri kaydet
+        async function saveSelections() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const selections = Object.entries(attendanceSelections)
+                .filter(([date, selection]) => selection !== undefined)
+                .map(([date, will_attend]) => ({
+                    date: date,
+                    will_attend: will_attend
+                }));
+
+            try {
+                const response = await fetch(`${API_URL}/attendance/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(selections)
+                });
+
+                if (response.ok) {
+                    alert(`${selections.length} gün için seçimleriniz kaydedildi!`);
+                    loadMenuData(); // Güncel durumu yeniden yükle
+                } else {
+                    throw new Error('Kayıt başarısız');
+                }
+            } catch (error) {
+                console.error("Hata:", error);
+                alert("Bir hata oluştu: " + error.message);
+            }
+        }
+
+        // Çıkış
+        function logout() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                localStorage.removeItem('is_admin');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Görünüm değiştirme
+        function setActiveView(view) {
+            activeView = view;
+            
+            document.querySelectorAll('[id$="-btn"]').forEach(btn => {
+                btn.className = 'px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100';
+            });
+            document.getElementById(view + '-btn').className = 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white';
+            
+            loadMenuData();
+        }
+
+        // Tarih navigasyonu
+        function navigateDate(direction) {
+            const newDate = new Date(currentDate);
+            if (activeView === 'daily') {
+                newDate.setDate(newDate.getDate() + direction);
+            } else if (activeView === 'weekly') {
+                newDate.setDate(newDate.getDate() + (direction * 7));
+            } else if (activeView === 'monthly') {
+                newDate.setMonth(newDate.getMonth() + direction);
+            }
+            currentDate = newDate;
+            loadMenuData();
+        }
+
+        // Katılım seçimi
+        function handleAttendanceChange(dateStr, willAttend) {
+            attendanceSelections[dateStr] = willAttend;
+            updateSelectionCount();
+            updateDisplay();
+        }
+
+        // Seçim sayısını güncelle
+        function updateSelectionCount() {
+            const count = Object.values(attendanceSelections).filter(selection => selection === true).length;
+            document.getElementById('selected-count').textContent = `Seçilen günler: ${count}`;
+            
+            const saveBtn = document.getElementById('save-btn');
+            if (count > 0) {
+                saveBtn.className = 'bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg transition-colors';
+                saveBtn.disabled = false;
+                saveBtn.textContent = `Seçimlerimi Kaydet (${count} gün)`;
+            } else {
+                saveBtn.className = 'bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-3 rounded-lg font-semibold shadow-lg';
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Seçimlerimi Kaydet (0 gün)';
+            }
+        }
+
+        // Tarih formatlama
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Tarih başlığını güncelle
+        function updatePeriodTitle() {
+            const periodElement = document.getElementById('current-period');
+            if (activeView === 'monthly') {
+                periodElement.textContent = currentDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+            } else if (activeView === 'weekly') {
+                const startOfWeek = new Date(currentDate);
+                startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                periodElement.textContent = `${startOfWeek.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+            } else {
+                periodElement.textContent = currentDate.toLocaleDateString('tr-TR');
+            }
+        }
+
+        // Menü kartlarını güncelle
+        function updateDisplay(menuData) {
+            updatePeriodTitle();
+            
+            const container = document.getElementById('menu-container');
+            if (!menuData || !menuData.menu_items) {
+                container.innerHTML = '<p class="text-center text-gray-500">Bu tarih için menü bilgisi bulunmamaktadır.</p>';
+                return;
+            }
+
+            const gridClass = activeView === 'daily' ? 'grid grid-cols-1 max-w-2xl mx-auto gap-6' :
+                            activeView === 'weekly' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6' :
+                            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+            
+            container.className = gridClass;
+            
+            const dateStr = formatDate(currentDate);
+            const isSelected = attendanceSelections[dateStr];
+            const isToday = dateStr === formatDate(new Date());
+            const isPast = currentDate < new Date().setHours(0,0,0,0);
+
+            const cardClass = `bg-white rounded-lg p-6 shadow-md border-2 transition-all ${
+                isSelected === true ? 'selected-yes' : 
+                isSelected === false ? 'selected-no' : 
+                'border-gray-200 hover:border-blue-300'
+            } ${isToday ? 'today-highlight' : ''}`;
+
+            const menuHtml = `
+                <div class="${cardClass}">
+                    <h3 class="text-lg font-semibold mb-4">${currentDate.toLocaleDateString('tr-TR', {weekday: 'long'})}</h3>
+                    <ul class="space-y-2 mb-6">
+                        <li class="text-gray-600"><span class="font-medium">Çorba:</span> ${menuData.menu_items.Corbasi}</li>
+                        <li class="text-gray-600"><span class="font-medium">Ana Yemek:</span> ${menuData.menu_items.Ana_Yemek}</li>
+                        <li class="text-gray-600"><span class="font-medium">Yan Yemek:</span> ${menuData.menu_items.Yan_Yemek}</li>
+                        <li class="text-gray-600"><span class="font-medium">Tatlı:</span> ${menuData.menu_items.Tatli}</li>
+                    </ul>
+                    ${!isPast ? `
+                        <div class="space-y-3">
+                            <p class="text-sm font-medium text-gray-700">Yemekhaneye gelecek misiniz?</p>
+                            <div class="flex space-x-3">
+                                <button onclick="handleAttendanceChange('${dateStr}', true)" 
+                                    class="flex-1 py-2 px-4 rounded ${isSelected === true ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                    Evet
+                                </button>
+                                <button onclick="handleAttendanceChange('${dateStr}', false)"
+                                    class="flex-1 py-2 px-4 rounded ${isSelected === false ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                    Hayır
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-gray-100 p-3 rounded-lg text-center text-gray-500">
+                            Geçmiş tarih için seçim yapılamaz
+                        </div>
+                    `}
+                </div>
+            `;
+
+            container.innerHTML = menuHtml;
+        }
+    </script>
+</body>
+</html>

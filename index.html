@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yemek Listesi - Giriş</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+        }
+
+        .logo {
+            text-align: center;
+            padding: 30px 40px 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8eeff 100%);
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tab-container {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #667eea;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-admin {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🍽️ Yemek Listesi</h1>
+            <p>Şirket Yemekhane Sistemi</p>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab-button active" onclick="switchTab('user')" id="user-tab">
+                <span class="tab-icon">👤</span>
+                Kullanıcı Girişi
+            </button>
+            <button class="tab-button" onclick="switchTab('admin')" id="admin-tab">
+                <span class="tab-icon">👨‍💼</span>
+                Admin Girişi
+            </button>
+        </div>
+
+        <div class="form-container">
+            <!-- Kullanıcı Giriş Formu -->
+            <div id="user-content" class="tab-content active">
+                <form id="userLoginForm" onsubmit="handleLogin('user', event)">
+                    <div class="form-group">
+                        <label for="userUsername">Kullanıcı Adı</label>
+                        <input type="text" id="userUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">Şifre</label>
+                        <input type="password" id="userPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="userLoginBtn">
+                        Giriş Yap
+                    </button>
+                </form>
+            </div>
+
+            <!-- Admin Giriş Formu -->
+            <div id="admin-content" class="tab-content">
+                <form id="adminLoginForm" onsubmit="handleLogin('admin', event)">
+                    <div class="form-group">
+                        <label for="adminUsername">Admin Kullanıcı Adı</label>
+                        <input type="text" id="adminUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Şifre</label>
+                        <input type="password" id="adminPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-admin" id="adminLoginBtn">
+                        Admin Girişi
+                    </button>
+                </form>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Giriş yapılıyor...</p>
+            </div>
+
+            <div class="message" id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentTab = 'user';
+
+        // Sayfa yüklendiğinde çalışır
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExistingLogin();
+        });
+
+        // Tab değiştirme
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tab + '-tab').classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tab + '-content').classList.add('active');
+            
+            hideMessage();
+        }
+
+        // Giriş işlemi
+        async function handleLogin(loginType, event) {
+            event.preventDefault();
+            
+            const isAdmin = loginType === 'admin';
+            const usernameInput = isAdmin ? 
+                document.getElementById('adminUsername') : 
+                document.getElementById('userUsername');
+            const passwordInput = isAdmin ? 
+                document.getElementById('adminPassword') : 
+                document.getElementById('userPassword');
+            
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Kullanıcı adı ve şifre gerekli!', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch(`${API_URL}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+
+                if (!response.ok) {
+                    throw new Error('Giriş başarısız');
+                }
+
+                const data = await response.json();
+                
+                if (isAdmin && !data.is_admin) {
+                    throw new Error('Admin yetkisi gerekli');
+                }
+
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('username', username);
+                localStorage.setItem('is_admin', data.is_admin);
+
+                showMessage('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = data.is_admin ? 'admin.html' : 'user-menu.html';
+                }, 1000);
+
+            } catch (error) {
+                showMessage('Hata: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Mevcut giriş kontrolü
+        function checkExistingLogin() {
+            const token = localStorage.getItem('token');
+            const isAdmin = localStorage.getItem('is_admin') === 'true';
+
+            if (token) {
+                window.location.href = isAdmin ? 'admin.html' : 'user-menu.html';
+            }
+        }
+
+        // Loading durumunu göster/gizle
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            document.getElementById('userLoginBtn').disabled = show;
+            document.getElementById('adminLoginBtn').disabled = show;
+        }
+
+        // Mesaj göster
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(hideMessage, 3000);
+            }
+        }
+
+        // Mesajı gizle
+        function hideMessage() {
+            message.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
