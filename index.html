@@ -209,12 +209,11 @@
             </button>
             <button class="tab-button" onclick="switchTab('admin')" id="admin-tab">
                 <span class="tab-icon">👨‍💼</span>
-                Admin Girişi
+                Admin/Yönetici Girişi
             </button>
         </div>
 
         <div class="form-container">
-            <!-- Kullanıcı Giriş Formu -->
             <div id="user-content" class="tab-content active">
                 <form id="userLoginForm" onsubmit="handleLogin('user', event)">
                     <div class="form-group">
@@ -231,11 +230,10 @@
                 </form>
             </div>
 
-            <!-- Admin Giriş Formu -->
             <div id="admin-content" class="tab-content">
                 <form id="adminLoginForm" onsubmit="handleLogin('admin', event)">
                     <div class="form-group">
-                        <label for="adminUsername">Admin Kullanıcı Adı</label>
+                        <label for="adminUsername">Admin / Yönetici Adı</label>
                         <input type="text" id="adminUsername" required>
                     </div>
                     <div class="form-group">
@@ -261,12 +259,10 @@
         const API_URL = 'http://localhost:8000';
         let currentTab = 'user';
 
-        // Sayfa yüklendiğinde çalışır
         document.addEventListener('DOMContentLoaded', function() {
             checkExistingLogin();
         });
 
-        // Tab değiştirme
         function switchTab(tab) {
             currentTab = tab;
             
@@ -283,15 +279,14 @@
             hideMessage();
         }
 
-        // Giriş işlemi
         async function handleLogin(loginType, event) {
             event.preventDefault();
             
-            const isAdmin = loginType === 'admin';
-            const usernameInput = isAdmin ? 
+            const isAdminAttempt = loginType === 'admin';
+            const usernameInput = isAdminAttempt ? 
                 document.getElementById('adminUsername') : 
                 document.getElementById('userUsername');
-            const passwordInput = isAdmin ? 
+            const passwordInput = isAdminAttempt ? 
                 document.getElementById('adminPassword') : 
                 document.getElementById('userPassword');
             
@@ -304,6 +299,7 @@
             }
 
             showLoading(true);
+            hideMessage();
 
             try {
                 const response = await fetch(`${API_URL}/token`, {
@@ -315,62 +311,93 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Giriş başarısız');
+                    const errorJson = await response.json().catch(() => ({ detail: 'Kullanıcı adı veya şifre hatalı.' }));
+                    throw new Error(errorJson.detail);
                 }
 
                 const data = await response.json();
                 
-                if (isAdmin && !data.is_admin) {
-                    throw new Error('Admin yetkisi gerekli');
+                // --- DEĞİŞEN KONTROL MANTIĞI ---
+                // "Kullanıcı Girişi" sekmesinden giriş yapılıyorsa (!isAdminAttempt),
+                // sadece tam admin yetkisine sahip olanları engelle. Yöneticiler girebilir.
+                if (!isAdminAttempt && data.is_admin) {
+                    showMessage("Admin yetkisine sahipsiniz. Lütfen diğer sekmeyi kullanın.", 'error');
+                    showLoading(false);
+                    return;
                 }
 
+                // "Admin/Yönetici" sekmesinden giriş yapılıyorsa,
+                // admin veya yönetici yetkisi olmalı.
+                if (isAdminAttempt && !data.is_admin && !data.is_manager) {
+                     showMessage("Bu sekmeden giriş yapmak için admin veya yönetici yetkiniz bulunmuyor.", 'error');
+                    showLoading(false);
+                    return;
+                }
+                // --- KONTROL MANTIĞI SONU ---
+
                 localStorage.setItem('token', data.access_token);
-                localStorage.setItem('username', username);
+                localStorage.setItem('username', data.username);
                 localStorage.setItem('is_admin', data.is_admin);
+                localStorage.setItem('is_manager', data.is_manager); 
+                localStorage.setItem('department', data.department);
 
                 showMessage('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
                 
+                // --- DEĞİŞEN YÖNLENDİRME MANTIĞI ---
                 setTimeout(() => {
-                    window.location.href = data.is_admin ? 'admin.html' : 'user-menu.html';
+                    // Kullanıcının girmeye çalıştığı sekmeye göre yönlendirme yap.
+                    if (isAdminAttempt) {
+                        // Admin/Yönetici sekmesinden girenler her zaman admin paneline gider.
+                        window.location.href = 'admin.html';
+                    } else {
+                        // Kullanıcı sekmesinden girenler her zaman kullanıcı paneline gider.
+                        window.location.href = 'user-menu.html';
+                    }
                 }, 1000);
+                // --- YÖNLENDİRME MANTIĞI SONU ---
 
             } catch (error) {
-                showMessage('Hata: ' + error.message, 'error');
-            } finally {
+                showMessage(error.message, 'error');
                 showLoading(false);
             }
         }
 
-        // Mevcut giriş kontrolü
         function checkExistingLogin() {
             const token = localStorage.getItem('token');
-            const isAdmin = localStorage.getItem('is_admin') === 'true';
-
+            // Otomatik yönlendirme, bu esnek yapıda karışıklığa neden olabileceğinden
+            // isteğe bağlı olarak kaldırılabilir veya basitleştirilebilir.
+            // Şimdilik olduğu gibi bırakıldı.
             if (token) {
-                window.location.href = isAdmin ? 'admin.html' : 'user-menu.html';
+                 const isAdmin = localStorage.getItem('is_admin') === 'true';
+                 const isManager = localStorage.getItem('is_manager') === 'true';
+                 if (isAdmin || isManager) {
+                    // Bu kısım, yöneticinin her zaman admin paneline yönlenmesine neden olabilir.
+                    // Eğer yönetici bir önceki sefer kullanıcı panelinden çıktıysa,
+                    // bu mantık onu yine admin paneline atar. Bu istenmiyorsa,
+                    // checkExistingLogin fonksiyonu tamamen kaldırılabilir.
+                    // window.location.href = 'admin.html';
+                 } else {
+                    // window.location.href = 'user-menu.html';
+                 }
             }
         }
 
-        // Loading durumunu göster/gizle
         function showLoading(show) {
+            const loading = document.getElementById('loading');
             loading.style.display = show ? 'block' : 'none';
             document.getElementById('userLoginBtn').disabled = show;
             document.getElementById('adminLoginBtn').disabled = show;
         }
 
-        // Mesaj göster
         function showMessage(text, type) {
+            const message = document.getElementById('message');
             message.textContent = text;
             message.className = `message ${type}`;
             message.style.display = 'block';
-            
-            if (type === 'success') {
-                setTimeout(hideMessage, 3000);
-            }
         }
 
-        // Mesajı gizle
         function hideMessage() {
+            const message = document.getElementById('message');
             message.style.display = 'none';
         }
     </script>

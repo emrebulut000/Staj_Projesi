@@ -3,1244 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Paneli - Yemek Listesi</title>
+    <title>Yönetim Paneli</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 24px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logout-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* Sidebar */
-        .container {
-            display: flex;
-            min-height: calc(100vh - 70px);
-        }
-
-        .sidebar {
-            width: 250px;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            padding: 20px 0;
-        }
-
-        .nav-item {
-            padding: 15px 30px;
-            cursor: pointer;
-            transition: background 0.3s;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #f8f9fa;
-        }
-
-        .nav-item.active {
-            background: #e3f2fd;
-            border-left-color: #667eea;
-            color: #667eea;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 30px;
-        }
-
-        .page-section {
-            display: none;
-        }
-
-        .page-section.active {
-            display: block;
-        }
-
-        .page-title {
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
-        }
-
-        .card h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-
-        /* Forms */
-        .form-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            flex: 1;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e1e1;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        /* Tables */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        /* Messages */
-        .message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .message-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .message-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 30px;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 10px;
-            position: relative;
-        }
-
-        .close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #aaa;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* Date inputs */
-        .date-filter {
-            display: flex;
-            gap: 15px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
-
-        .date-filter .form-group {
-            min-width: 150px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; min-height: 100vh; color: #333; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
+        .container { display: flex; min-height: calc(100vh - 65px); }
+        .sidebar { width: 250px; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.1); padding: 20px 0; }
+        .nav-item { padding: 15px 30px; cursor: pointer; transition: background 0.3s; border-left: 3px solid transparent; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover { background: #f8f9fa; }
+        .nav-item.active { background: #e3f2fd; border-left-color: #667eea; color: #667eea; font-weight: 600; }
+        .main-content { flex: 1; padding: 30px; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .page-title { font-size: 28px; color: #333; margin-bottom: 30px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        .card h3 { color: #333; margin-bottom: 20px; font-size: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .message { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .message-success { background: #d4edda; color: #155724; }
+        .message-error { background: #f8d7da; color: #721c24; }
+        .stats-grid, .report-grid { display: grid; gap: 20px; }
+        .stats-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .report-grid { grid-template-columns: 1fr 1fr; }
+        .stat-card { text-align: center; }
+        .stat-number { font-size: 36px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; font-size: 14px; }
+        .report-list { list-style-type: none; padding: 0; }
+        .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
+        .form-group { flex: 1; margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; border: none; cursor: pointer; margin-right: 5px; }
+        .btn-approve { background-color: #10b981; color: white; }
+        .btn-reject { background-color: #ef4444; color: white; }
+        .btn-edit { background-color: #3b82f6; color: white; }
+        .btn-delete { background-color: #990000; color: white; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; color: white; white-space: nowrap; }
+        .status-beklemede-yonetici { background-color: #f59e0b; }
+        .status-beklemede-ik { background-color: #3b82f6; }
+        .status-onaylandi { background-color: #10b981; }
+        .status-reddedildi, .status-yonetici-tarafindan-reddedildi { background-color: #ef4444; }
+        .filter-container { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+        .filter-group { display: flex; flex-direction: column; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 10px; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
-        <h1>🍽️ Admin Paneli</h1>
+        <h1 id="panelTitle">Yönetim Paneli</h1>
         <div class="user-info">
-            <span id="adminName">Admin User</span>
+            <span id="userName"></span>
             <button class="logout-btn" onclick="logout()">Çıkış</button>
         </div>
     </div>
-
     <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="nav-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
-            <div class="nav-item" onclick="showSection('categories')">📂 Kategoriler</div>
-            <div class="nav-item" onclick="showSection('meals')">🍽️ Yemekler</div>
-            <div class="nav-item" onclick="showSection('menu-planning')">📅 Menü Planlama</div>
-            <div class="nav-item" onclick="showSection('reports')">📈 Raporlar</div>
-        </div>
-
-        <!-- Main Content -->
+        <div class="sidebar" id="sidebar"></div>
         <div class="main-content">
-            <!-- Dashboard Section -->
-            <div id="dashboard" class="page-section active">
+            <div id="dashboard" class="page-section">
                 <h2 class="page-title">Dashboard</h2>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalMeals">0</div>
-                        <div class="stat-label">Toplam Yemek</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalCategories">0</div>
-                        <div class="stat-label">Kategori Sayısı</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="todaySelections">0</div>
-                        <div class="stat-label">Bugünkü Seçimler</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="activeUsers">0</div>
-                        <div class="stat-label">Aktif Kullanıcı</div>
-                    </div>
-                </div>
-
                 <div class="card">
-                    <h3>Son Aktiviteler</h3>
-                    <div id="recentActivities">
-                        <p>Aktivite verisi yükleniyor...</p>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="todaySelections">0</div>
+                            <div class="stat-label">Bugünkü Katılım</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeUsers">0</div>
+                            <div class="stat-label">Aktif Kullanıcı</div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Categories Section -->
-            <div id="categories" class="page-section">
-                <h2 class="page-title">Kategori Yönetimi</h2>
-                
-                <div class="message" id="categoryMessage"></div>
-
-                <div class="card">
-                    <h3>Yeni Kategori Ekle</h3>
-                    <form id="categoryForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="categoryName">Kategori Adı:</label>
-                                <input type="text" id="categoryName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="categoryDescription">Açıklama:</label>
-                                <input type="text" id="categoryDescription">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">➕ Kategori Ekle</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h3>Mevcut Kategoriler</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Kategori Adı</th>
-                                    <th>Açıklama</th>
-                                    <th>Oluşturma Tarihi</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categoriesTable">
-                                <tr>
-                                    <td colspan="5" style="text-align: center;">Kategoriler yükleniyor...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Meals Section -->
-            <div id="meals" class="page-section">
-                <h2 class="page-title">Yemek Yönetimi</h2>
-                
-                <div class="message" id="mealMessage"></div>
-
-                <div class="card">
-                    <h3>Yeni Yemek Ekle</h3>
-                    <form id="mealForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="mealName">Yemek Adı:</label>
-                                <input type="text" id="mealName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="mealCategory">Kategori:</label>
-                                <select id="mealCategory" required>
-                                    <option value="">Kategori Seçin</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="mealCalories">Kalori:</label>
-                                <input type="number" id="mealCalories" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="mealImage">Görsel URL:</label>
-                                <input type="url" id="mealImage" placeholder="https://example.com/image.jpg">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="mealDescription">Açıklama:</label>
-                            <textarea id="mealDescription" placeholder="Yemek hakkında detaylı bilgi..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">🍽️ Yemek Ekle</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h3>Mevcut Yemekler</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Yemek Adı</th>
-                                    <th>Kategori</th>
-                                    <th>Kalori</th>
-                                    <th>Durum</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mealsTable">
-                                <tr>
-                                    <td colspan="6" style="text-align: center;">Yemekler yükleniyor...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Menu Planning Section -->
             <div id="menu-planning" class="page-section">
                 <h2 class="page-title">Menü Planlama</h2>
-                
                 <div class="message" id="menuMessage"></div>
-
                 <div class="card">
-                    <h3>Yeni Menü Planı</h3>
+                    <h3>Yeni Menü Oluştur</h3>
                     <form id="menuForm">
+                        <div class="form-group"><label for="menuDate">Tarih:</label><input type="date" id="menuDate" required></div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="menuDate">Tarih:</label>
-                                <input type="date" id="menuDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="mealType">Öğün:</label>
-                                <select id="mealType" required>
-                                    <option value="">Öğün Seçin</option>
-                                    <option value="breakfast">Kahvaltı</option>
-                                    <option value="lunch">Öğle Yemeği</option>
-                                    <option value="dinner">Akşam Yemeği</option>
-                                    <option value="snack">Atıştırmalık</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="menuMeal">Yemek:</label>
-                                <select id="menuMeal" required>
-                                    <option value="">Yemek Seçin</option>
-                                </select>
-                            </div>
+                            <div class="form-group"><label for="menuSoup">Çorba:</label><input type="text" id="menuSoup"></div>
+                            <div class="form-group"><label for="menuMainCourse">Ana Yemek:</label><input type="text" id="menuMainCourse" required></div>
                         </div>
-                        <button type="submit" class="btn btn-primary">📅 Menü Ekle</button>
+                        <div class="form-row">
+                            <div class="form-group"><label for="menuSideDish">Yan Yemek:</label><input type="text" id="menuSideDish"></div>
+                            <div class="form-group"><label for="menuDessert">Tatlı / Meyve:</label><input type="text" id="menuDessert"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">📅 Menü Oluştur</button>
                     </form>
                 </div>
-
-                <div class="card">
-                    <h3>Menü Takvimi</h3>
-                    <div class="date-filter">
-                        <div class="form-group">
-                            <label for="startDate">Başlangıç:</label>
-                            <input type="date" id="startDate">
+            </div>
+            <div id="overtime-requests" class="page-section">
+                <h2 class="page-title">Fazla Mesai Talepleri</h2>
+                <div class="card" id="filters-card">
+                    <h3>Filtrele</h3>
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <label for="statusFilter">Duruma Göre</label>
+                            <select id="statusFilter">
+                                <option value="Beklemede">Tüm Bekleyenler</option>
+                                <option value="Yönetici Onayı Bekliyor">Yönetici Onayı Bekliyor</option>
+                                <option value="İK Onayı Bekliyor">İK Onayı Bekliyor</option>
+                                <option value="">Tümü</option>
+                                <option value="Onaylandı">Onaylandı</option>
+                                <option value="Reddedildi">Reddedilenler</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="endDate">Bitiş:</label>
-                            <input type="date" id="endDate">
+                        <div class="filter-group" id="user-filter-group">
+                            <label for="userFilter">Personele Göre</label>
+                            <select id="userFilter"><option value="">Tümü</option></select>
                         </div>
-                        <button class="btn btn-secondary" onclick="filterMenuPlans()">🔍 Filtrele</button>
+                        <div class="filter-group" id="department-filter-group">
+                            <label for="departmentFilter">Departmana Göre</label>
+                            <select id="departmentFilter"><option value="">Tümü</option></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadOvertimeRequests()">Filtrele</button>
                     </div>
-                    
+                </div>
+                <div class="card">
+                    <h3 id="requests-title">Talepler</h3>
                     <div class="table-container">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>Tarih</th>
-                                    <th>Öğün</th>
-                                    <th>Yemek</th>
-                                    <th>Kategori</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody id="menuPlansTable">
-                                <tr>
-                                    <td colspan="5" style="text-align: center;">Menü planları yükleniyor...</td>
-                                </tr>
-                            </tbody>
+                            <thead><tr><th>Personel</th><th>Departman</th><th>Tarih</th><th>Saatler</th><th>Açıklama</th><th>Durum</th><th>İşlemler</th></tr></thead>
+                            <tbody id="overtime-requests-table"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <!-- Reports Section -->
             <div id="reports" class="page-section">
                 <h2 class="page-title">Raporlar</h2>
-                
                 <div class="card">
-                    <h3>Yemek Seçim Raporu</h3>
-                    <div class="date-filter">
-                        <div class="form-group">
-                            <label for="reportStartDate">Başlangıç:</label>
-                            <input type="date" id="reportStartDate">
-                        </div>
-                        <div class="form-group">
-                            <label for="reportEndDate">Bitiş:</label>
-                            <input type="date" id="reportEndDate">
-                        </div>
-                        <button class="btn btn-primary" onclick="generateReport()">📊 Rapor Oluştur</button>
+                    <h3>Katılım Raporları</h3>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                        <input type="date" id="reportDate" class="form-group"><button class="btn btn-primary" onclick="loadAttendanceReport()">Raporu Göster</button>
                     </div>
-                    
-                    <div id="reportResults">
-                        <p>Rapor oluşturmak için tarih aralığı seçin ve butona tıklayın.</p>
+                    <div id="report-results" style="display: none;">
+                        <h4 id="report-title" style="margin-bottom: 15px;"></h4>
+                        <div class="report-grid">
+                            <div><h5 style="color: #10b981;">✔️ Gelecek Personeller (<span id="attending-count">0</span>)</h5><ul id="attending-list" class="report-list"></ul></div>
+                            <div><h5 style="color: #ef4444;">❌ Gelmeyecek Personeller (<span id="not-attending-count">0</span>)</h5><ul id="not-attending-list" class="report-list"></ul></div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div id="user-management" class="page-section">
+                <h2 class="page-title">Kullanıcı Yönetimi</h2>
+                <div class="message" id="userMessage"></div>
+                <div class="card">
+                    <button class="btn btn-primary" onclick="openCreateUserModal()">+ Yeni Kullanıcı Ekle</button>
+                    <div class="table-container" style="margin-top: 20px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kullanıcı Adı</th>
+                                    <th>Email</th>
+                                    <th>Departman</th>
+                                    <th>Yöneticisi</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeUserModal()">&times;</span>
+            <h3 id="userModalTitle">Kullanıcı Formu</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label for="username">Kullanıcı Adı:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-posta:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group" id="password-group">
+                    <label for="password">Şifre:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">Departman:</label>
+                    <input type="text" id="department">
+                </div>
+                <div class="form-group">
+                    <label for="manager">Yönetici:</label>
+                    <select id="manager"><option value="">Yönetici Yok</option></select>
+                </div>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </form>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8000';
-        let currentUser = null;
-        let categories = [];
-        let meals = [];
-        let menuPlans = [];
+        const API_URL = 'http://127.0.0.1:8000';
+        let IS_ADMIN = false;
+        let IS_MANAGER = false;
+        let ALL_USERS_CACHE = [];
 
-        // Sayfa yüklendiğinde çalışır
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAdminAuth();
-            loadInitialData();
-            setupForms();
-            setDefaultDates();
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            document.getElementById('menuForm')?.addEventListener('submit', handleMenuSubmit);
         });
 
-        // Admin yetkisi kontrolü
-        async function checkAdminAuth() {
+        function checkAuth() {
             const token = localStorage.getItem('token');
-            if (!token) {
+            const username = localStorage.getItem('username');
+            IS_ADMIN = localStorage.getItem('is_admin') === 'true';
+            IS_MANAGER = localStorage.getItem('is_manager') === 'true';
+            if (!token || (!IS_ADMIN && !IS_MANAGER)) {
+                alert('Bu sayfaya erişim yetkiniz yok.');
                 window.location.href = 'index.html';
                 return;
             }
+            document.getElementById('userName').textContent = username || 'Kullanıcı';
+            setupUI();
+        }
 
-            try {
-                const response = await fetch(`${API_URL}/api/current-user`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+        function setupUI() {
+            const sidebar = document.getElementById('sidebar');
+            let sidebarHTML = '';
+            let defaultSection;
 
-                if (!response.ok) {
-                    throw new Error('Yetkilendirme başarısız');
+            // Düzeltme: Tarayıcı hafızasından son kalınan sekmeyi oku
+            const savedSection = sessionStorage.getItem('lastAdminSection');
+
+            if (IS_ADMIN) {
+                document.getElementById('panelTitle').textContent = 'Admin Paneli';
+                sidebarHTML = `
+                    <div class="nav-item" id="nav-dashboard" onclick="showSection(event, 'dashboard')">📊 Dashboard</div>
+                    <div class="nav-item" id="nav-menu-planning" onclick="showSection(event, 'menu-planning')">📅 Menü Planlama</div>
+                    <div class="nav-item" id="nav-overtime-requests" onclick="showSection(event, 'overtime-requests')">🕒 Fazla Mesai Onayları</div>
+                    <div class="nav-item" id="nav-reports" onclick="showSection(event, 'reports')">📋 Raporlar</div>
+                    <div class="nav-item" id="nav-user-management" onclick="showSection(event, 'user-management')">👥 Kullanıcı Yönetimi</div>
+                `;
+                document.getElementById('user-filter-group').style.display = 'flex';
+                document.getElementById('department-filter-group').style.display = 'flex';
+                populateFilters();
+                
+                // Düzeltme: Hafızada sekme varsa onu, yoksa dashboard'u varsayılan yap
+                defaultSection = savedSection || 'dashboard';
+                if (!savedSection) { // Sadece ilk girişte filitreyi ayarla
+                    document.getElementById('statusFilter').value = "Beklemede";
                 }
-
-                const user = await response.json();
-                if (!user.is_admin) {
-                    alert('Bu sayfaya erişim yetkiniz yok!');
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                currentUser = user;
-                document.getElementById('adminName').textContent = user.username;
-            } catch (error) {
-                console.error('Auth error:', error);
-                window.location.href = 'index.html';
+            } else if (IS_MANAGER) {
+                document.getElementById('panelTitle').textContent = 'Yönetici Paneli';
+                sidebarHTML = `<div class="nav-item" id="nav-overtime-requests" onclick="showSection(event, 'overtime-requests')">🕒 Ekip Mesai Talepleri</div>`;
+                document.getElementById('user-filter-group').style.display = 'none';
+                document.getElementById('department-filter-group').style.display = 'none';
+                document.getElementById('requests-title').textContent = 'Ekibimin Mesai Talepleri';
+                defaultSection = 'overtime-requests';
+                document.getElementById('statusFilter').value = "Yönetici Onayı Bekliyor";
             }
+            sidebar.innerHTML = sidebarHTML;
+            showSection(null, defaultSection);
         }
 
-        // Başlangıç verilerini yükle
-        function loadInitialData() {
-            loadCategories();
-            loadMeals();
-            loadMenuPlans();
-            updateDashboardStats();
-        }
+        function showSection(event, sectionName) {
+            // Düzeltme: Aktif sekmeyi tarayıcı hafızasına kaydet
+            sessionStorage.setItem('lastAdminSection', sectionName);
 
-        // Form event listener'larını ayarla
-        function setupForms() {
-            document.getElementById('categoryForm').addEventListener('submit', handleCategorySubmit);
-            document.getElementById('mealForm').addEventListener('submit', handleMealSubmit);
-            document.getElementById('menuForm').addEventListener('submit', handleMenuSubmit);
-        }
-
-        // Varsayılan tarihleri ayarla
-        function setDefaultDates() {
-            const today = new Date().toISOString().split('T')[0];
-            const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            
-            document.getElementById('menuDate').value = today;
-            document.getElementById('startDate').value = today;
-            document.getElementById('endDate').value = nextWeek;
-            document.getElementById('reportStartDate').value = today;
-            document.getElementById('reportEndDate').value = nextWeek;
-        }
-
-        // Sayfa değiştirme
-        function showSection(sectionName) {
-            // Tüm section'ları gizle
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Tüm nav item'lardan active class'ını kaldır
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Seçilen section'ı göster
+            document.querySelectorAll('.page-section').forEach(section => section.classList.remove('active'));
             document.getElementById(sectionName).classList.add('active');
             
-            // Seçilen nav item'a active class'ı ekle
-            event.target.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            if (event) {
+                event.currentTarget.classList.add('active');
+            } else {
+                 const nav = document.getElementById(`nav-${sectionName}`);
+                 if (nav) nav.classList.add('active');
+            }
+
+            if (sectionName === 'dashboard') loadDashboardStats();
+            else if (sectionName === 'menu-planning') setDefaultDates();
+            else if (sectionName === 'overtime-requests') loadOvertimeRequests();
+            else if (sectionName === 'reports') document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+            else if (sectionName === 'user-management') loadUsers();
         }
 
-        // Kategoriler
-        async function loadCategories() {
+        async function loadOvertimeRequests() {
+            const token = localStorage.getItem('token');
+            const tableBody = document.getElementById('overtime-requests-table');
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Yükleniyor...</td></tr>';
+            let url;
+            const status = document.getElementById('statusFilter').value;
+            if (IS_ADMIN) {
+                const userId = document.getElementById('userFilter').value;
+                const department = document.getElementById('departmentFilter').value;
+                url = new URL(`${API_URL}/api/overtime/all`);
+                if (status) url.searchParams.append('status', status);
+                if (userId) url.searchParams.append('user_id', userId);
+                if (department) url.searchParams.append('department', department);
+            } else if (IS_MANAGER) {
+                url = new URL(`${API_URL}/api/overtime/manager/all`);
+                if (status) url.searchParams.append('status', status);
+            } else { return; }
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/categories`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Kategoriler yüklenemedi');
-                }
-
-                categories = await response.json();
-                updateCategoriesTable();
-                updateCategorySelects();
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Talepler yüklenemedi');
+                let requests = await response.json();
+                renderTable(requests);
             } catch (error) {
-                console.error('Kategori yükleme hatası:', error);
-                showMessage('categoryMessage', 'Kategoriler yüklenirken hata oluştu', 'error');
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: red;">${error.message}</td></tr>`;
             }
         }
-
-        function updateCategoriesTable() {
-            const tbody = document.getElementById('categoriesTable');
-            tbody.innerHTML = categories.map(category => `
-                <tr>
-                    <td>${category.id}</td>
-                    <td>${category.name}</td>
-                    <td>${category.description || '-'}</td>
-                    <td>${formatDate(category.created_at)}</td>
-                    <td>
-                        <button class="btn btn-danger" onclick="deleteCategory(${category.id})" style="padding: 5px 10px; font-size: 12px;">🗑️ Sil</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateCategorySelects() {
-            const selects = [document.getElementById('mealCategory')];
-            selects.forEach(select => {
-                const currentValue = select.value;
-                select.innerHTML = '<option value="">Kategori Seçin</option>' + 
-                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
-                select.value = currentValue;
-            });
-        }
-
-        async function handleCategorySubmit(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('categoryName').value.trim();
-            const description = document.getElementById('categoryDescription').value.trim();
-
-            if (!name) {
-                showMessage('categoryMessage', 'Kategori adı gerekli!', 'error');
-                return;
-            }
-
+        
+        async function loadUsers() {
+            const token = localStorage.getItem('token');
+            const tableBody = document.getElementById('users-table-body');
+            const managerSelect = document.getElementById('manager');
+            if(!tableBody || !managerSelect) return;
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Yükleniyor...</td></tr>';
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/categories`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name,
-                        description
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Kategori eklenemedi');
-                }
-
-                const newCategory = await response.json();
-                categories.push(newCategory);
-                updateCategoriesTable();
-                updateCategorySelects();
-                
-                document.getElementById('categoryForm').reset();
-                showMessage('categoryMessage', 'Kategori başarıyla eklendi!', 'success');
-            } catch (error) {
-                console.error('Kategori ekleme hatası:', error);
-                showMessage('categoryMessage', 'Kategori eklenirken hata oluştu', 'error');
-            }
-        }
-
-        async function deleteCategory(id) {
-            if (!confirm('Bu kategoriyi silmek istediğinize emin misiniz?')) {
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/categories/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Kategori silinemedi');
-                }
-
-                categories = categories.filter(cat => cat.id !== id);
-                updateCategoriesTable();
-                updateCategorySelects();
-                showMessage('categoryMessage', 'Kategori başarıyla silindi!', 'success');
-            } catch (error) {
-                console.error('Kategori silme hatası:', error);
-                showMessage('categoryMessage', 'Kategori silinirken hata oluştu', 'error');
-            }
-        }
-
-        // Yemekler
-        async function loadMeals() {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/meals`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Yemekler yüklenemedi');
-                }
-
-                meals = await response.json();
-                updateMealsTable();
-                updateMealSelects();
-            } catch (error) {
-                console.error('Yemek yükleme hatası:', error);
-                showMessage('mealMessage', 'Yemekler yüklenirken hata oluştu', 'error');
-            }
-        }
-
-        function updateMealsTable() {
-            const tbody = document.getElementById('mealsTable');
-            tbody.innerHTML = meals.map(meal => {
-                const category = categories.find(cat => cat.id === meal.category_id);
-                return `
+                const response = await fetch(`${API_URL}/api/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Kullanıcılar yüklenemedi');
+                const users = await response.json();
+                ALL_USERS_CACHE = users;
+                tableBody.innerHTML = users.map(user => `
                     <tr>
-                        <td>${meal.id}</td>
-                        <td>${meal.name}</td>
-                        <td>${category ? category.name : 'Bilinmiyor'}</td>
-                        <td>${meal.calories || '-'}</td>
-                        <td>${meal.is_active ? '✅ Aktif' : '❌ Pasif'}</td>
+                        <td>${user.username} ${user.is_admin ? '(Admin)' : ''}</td>
+                        <td>${user.email}</td>
+                        <td>${user.department || '-'}</td>
+                        <td>${user.manager ? user.manager.username : 'Yok'}</td>
                         <td>
-                            <button class="btn btn-danger" onclick="deleteMeal(${meal.id})" style="padding: 5px 10px; font-size: 12px;">🗑️ Sil</button>
+                            <button class="btn-sm btn-edit" onclick='openEditUserModal(${JSON.stringify(user)})'>Düzenle</button>
+                            <button class="btn-sm btn-delete" onclick="handleDeleteUser(${user.id}, '${user.username}')">Sil</button>
                         </td>
                     </tr>
-                `;
-            }).join('');
-        }
-
-        function updateMealSelects() {
-            const select = document.getElementById('menuMeal');
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">Yemek Seçin</option>' + 
-                meals.filter(meal => meal.is_active).map(meal => `<option value="${meal.id}">${meal.name}</option>`).join('');
-            select.value = currentValue;
-        }
-
-        async function handleMealSubmit(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('mealName').value.trim();
-            const category_id = parseInt(document.getElementById('mealCategory').value);
-            const calories = parseInt(document.getElementById('mealCalories').value) || null;
-            const description = document.getElementById('mealDescription').value.trim();
-            const image_url = document.getElementById('mealImage').value.trim();
-
-            if (!name || !category_id) {
-                showMessage('mealMessage', 'Yemek adı ve kategori gerekli!', 'error');
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/meals/`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name,
-                        category_id,
-                        calories,
-                        description,
-                        image_url
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Yemek eklenemedi');
-                }
-
-                const newMeal = await response.json();
-                meals.push(newMeal);
-                updateMealsTable();
-                updateMealSelects();
+                `).join('') || '<tr><td colspan="5" style="text-align:center;">Hiç kullanıcı bulunmuyor.</td></tr>';
                 
-                document.getElementById('mealForm').reset();
-                showMessage('mealMessage', 'Yemek başarıyla eklendi!', 'success');
+                managerSelect.innerHTML = '<option value="">Yönetici Yok</option>';
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.username} ${user.is_admin ? '(Admin)' : ''}`;
+                    managerSelect.appendChild(option);
+                });
             } catch (error) {
-                console.error('Yemek ekleme hatası:', error);
-                showMessage('mealMessage', 'Yemek eklenirken hata oluştu', 'error');
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">${error.message}</td></tr>`;
             }
         }
 
-        async function deleteMeal(id) {
-            if (!confirm('Bu yemeği silmek istediğinize emin misiniz?')) {
+        async function handleDeleteUser(userId, username) {
+            if (!confirm(`'${username}' adlı kullanıcıyı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
                 return;
             }
-
+            const token = localStorage.getItem('token');
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/meals/${id}`, {
+                const response = await fetch(`${API_URL}/api/users/${userId}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
-                if (!response.ok) {
-                    throw new Error('Yemek silinemedi');
+                if (response.status !== 204) {
+                    const error = await response.json().catch(() => null);
+                    throw new Error(error ? error.detail : 'Kullanıcı silinemedi. Sunucu hatası.');
                 }
-
-                meals = meals.filter(m => m.id !== id);
-                updateMealsTable();
-                updateMealSelects();
-                showMessage('mealMessage', 'Yemek başarıyla silindi!', 'success');
+                showMessage('userMessage', `'${username}' adlı kullanıcı başarıyla silindi.`, 'success');
+                loadUsers(); 
             } catch (error) {
-                console.error('Yemek silme hatası:', error);
-                showMessage('mealMessage', 'Yemek silinirken hata oluştu', 'error');
+                showMessage('userMessage', 'Hata: ' + error.message, 'error');
             }
         }
 
-        // Menü Planları
-        async function loadMenuPlans() {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/menu`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+        const userModal = document.getElementById('userModal');
+        const userForm = document.getElementById('userForm');
 
-                if (!response.ok) {
-                    throw new Error('Menü planları yüklenemedi');
-                }
-
-                menuPlans = await response.json();
-                updateMenuPlansTable();
-            } catch (error) {
-                console.error('Menü planı yükleme hatası:', error);
-                showMessage('menuMessage', 'Menü planları yüklenirken hata oluştu', 'error');
-            }
+        function openCreateUserModal() {
+            userForm.reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userModalTitle').textContent = 'Yeni Kullanıcı Ekle';
+            document.getElementById('password-group').style.display = 'block';
+            document.getElementById('password').required = true;
+            document.getElementById('username').readOnly = false;
+            userForm.onsubmit = handleCreateUser;
+            userModal.style.display = 'block';
         }
 
-        function updateMenuPlansTable() {
-            const tbody = document.getElementById('menuPlansTable');
-            const mealTypeNames = {
-                'breakfast': 'Kahvaltı',
-                'lunch': 'Öğle Yemeği', 
-                'dinner': 'Akşam Yemeği',
-                'snack': 'Atıştırmalık'
+        function openEditUserModal(user) {
+            userForm.reset();
+            document.getElementById('userId').value = user.id;
+            document.getElementById('username').value = user.username;
+            document.getElementById('username').readOnly = true;
+            document.getElementById('email').value = user.email;
+            document.getElementById('department').value = user.department || '';
+            document.getElementById('manager').value = user.manager_id || '';
+            document.getElementById('userModalTitle').textContent = 'Kullanıcıyı Düzenle';
+            document.getElementById('password-group').style.display = 'none';
+            document.getElementById('password').required = false;
+            userForm.onsubmit = (e) => handleUpdateUser(e, user.id);
+            userModal.style.display = 'block';
+        }
+
+        function closeUserModal() { userModal.style.display = 'none'; }
+        
+        async function handleCreateUser(event) {
+            event.preventDefault();
+            const payload = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                department: document.getElementById('department').value,
+                manager_id: document.getElementById('manager').value ? parseInt(document.getElementById('manager').value) : null
             };
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`${API_URL}/api/users/`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) { const error = await response.json(); throw new Error(error.detail || 'Kullanıcı oluşturulamadı'); }
+                showMessage('userMessage', 'Kullanıcı başarıyla oluşturuldu!', 'success');
+                closeUserModal();
+                loadUsers();
+                populateFilters(); 
+            } catch (error) { showMessage('userMessage', 'Hata: ' + error.message, 'error'); }
+        }
 
-            tbody.innerHTML = menuPlans.map(plan => {
-                const meal = meals.find(m => m.id === plan.meal_id);
-                const category = meal ? categories.find(cat => cat.id === meal.category_id) : null;
-                
-                return `
-                    <tr>
-                        <td>${formatDate(plan.date)}</td>
-                        <td>${mealTypeNames[plan.meal_type] || plan.meal_type}</td>
-                        <td>${meal ? meal.name : 'Bilinmiyor'}</td>
-                        <td>${category ? category.name : 'Bilinmiyor'}</td>
-                        <td>
-                            <button class="btn btn-danger" onclick="deleteMenuPlan(${plan.id})" style="padding: 5px 10px; font-size: 12px;">🗑️ Sil</button>
-                        </td>
-                    </tr>
-                `;
+        async function handleUpdateUser(event, userId) {
+            event.preventDefault();
+            const payload = {
+                email: document.getElementById('email').value,
+                department: document.getElementById('department').value,
+                manager_id: document.getElementById('manager').value ? parseInt(document.getElementById('manager').value) : null
+            };
+             const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`${API_URL}/api/users/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) { const error = await response.json(); throw new Error(error.detail || 'Kullanıcı güncellenemedi'); }
+                showMessage('userMessage', 'Kullanıcı başarıyla güncellendi!', 'success');
+                closeUserModal();
+                loadUsers();
+            } catch (error) { showMessage('userMessage', 'Hata: ' + error.message, 'error'); }
+        }
+        
+        window.onclick = function(event) { if (event.target == userModal) { closeUserModal(); } }
+        
+        function showMessage(elementId, text, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = text;
+            el.className = `message message-${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+
+        function renderTable(requests) {
+            const tableBody = document.getElementById('overtime-requests-table');
+            if (requests.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Gösterilecek talep bulunmuyor.</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = requests.map(req => {
+                let statusClass = '';
+                if (req.status === 'Yönetici Onayı Bekliyor') statusClass = 'status-beklemede-yonetici';
+                else if (req.status === 'İK Onayı Bekliyor') statusClass = 'status-beklemede-ik';
+                else if (req.status === 'Onaylandı') statusClass = 'status-onaylandi';
+                else if (req.status.includes('Reddedildi')) statusClass = 'status-reddedildi';
+                let actions = '-';
+                if ((IS_MANAGER && !IS_ADMIN) && req.status === 'Yönetici Onayı Bekliyor') {
+                    actions = `<button class="btn-sm btn-approve" onclick="handleManagerAction(${req.id}, 'approve')">Onayla</button> <button class="btn-sm btn-reject" onclick="handleManagerAction(${req.id}, 'reject')">Reddet</button>`;
+                } else if (IS_ADMIN && req.status === 'İK Onayı Bekliyor') {
+                    actions = `<button class="btn-sm btn-approve" onclick="handleHrAction(${req.id}, 'Onaylandı')">Onayla</button> <button class="btn-sm btn-reject" onclick="handleHrAction(${req.id}, 'Reddedildi')">Reddet</button>`;
+                }
+                return `<tr><td>${req.user.username}</td><td>${req.department}</td><td>${new Date(req.date).toLocaleDateString('tr-TR')}</td><td>${req.start_time.substring(0,5)} - ${req.end_time.substring(0,5)}</td><td>${req.reason}</td><td><span class="status-badge ${statusClass}">${req.status}</span></td><td>${actions}</td></tr>`;
             }).join('');
         }
-
-        async function handleMenuSubmit(e) {
-            e.preventDefault();
-            
-            const date = document.getElementById('menuDate').value;
-            const meal_id = parseInt(document.getElementById('menuMeal').value);
-            const meal_type = document.getElementById('mealType').value;
-
-            if (!date || !meal_id || !meal_type) {
-                showMessage('menuMessage', 'Tüm alanlar gerekli!', 'error');
-                return;
+        
+        function logout(){
+            if(confirm('Çıkış yapmak istediğinizden emin misiniz?')){
+                sessionStorage.removeItem('lastAdminSection'); // Düzeltme: Çıkış yaparken hafızayı temizle
+                localStorage.clear();
+                window.location.href='index.html';
             }
-
+        }
+        
+        async function handleManagerAction(id,act){if(!confirm(`Bu talebi "${act==='approve'?'onaylamak':'reddetmek'}" istediğinize emin misiniz?`))return;const t=localStorage.getItem('token');try{const r=await fetch(`${API_URL}/api/overtime/${id}/manager_action?action=${act}`,{method:'PUT',headers:{'Authorization':`Bearer ${t}`}});if(!r.ok)throw new Error('İşlem hatası');showMessage('userMessage', 'Durum güncellendi.', 'success');loadOvertimeRequests();}catch(e){showMessage('userMessage', 'Hata: '+e.message, 'error');}}
+        
+        async function handleHrAction(id,st){if(!confirm(`Bu talebi "${st}" olarak güncellemek istediğinize emin misiniz?`))return;const t=localStorage.getItem('token');try{const r=await fetch(`${API_URL}/api/overtime/${id}/hr_action?status=${st}`,{method:'PUT',headers:{'Authorization':`Bearer ${t}`}});if(!r.ok)throw new Error('Durum güncellenemedi');showMessage('userMessage', 'Durum güncellendi.', 'success');loadOvertimeRequests();}catch(e){showMessage('userMessage', 'Hata: '+e.message, 'error');}}
+        
+        async function loadDashboardStats(){const token=localStorage.getItem('token');try{const res=await fetch(`${API_URL}/api/stats/dashboard`,{headers:{'Authorization':`Bearer ${token}`}});const data=await res.json();document.getElementById('todaySelections').textContent=data.today_selections;document.getElementById('activeUsers').textContent=data.active_users;}catch(e){console.error(e);}}
+        
+        async function handleMenuSubmit(e){e.preventDefault();const token=localStorage.getItem('token');const payload={date:document.getElementById('menuDate').value,meal_type:'Öğle Yemeği',menu_items:{Corbasi:document.getElementById('menuSoup').value,Ana_Yemek:document.getElementById('menuMainCourse').value,Yan_Yemek:document.getElementById('menuSideDish').value,Tatli:document.getElementById('menuDessert').value,}};try{const res=await fetch(`${API_URL}/api/menu`,{method:'POST',headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok){const err=await res.json();throw new Error(err.detail);}showMessage('menuMessage','Menü başarıyla eklendi!','success');e.target.reset();}catch(err){showMessage('menuMessage','Hata: '+err.message,'error');}}
+        
+        async function loadAttendanceReport(){const token=localStorage.getItem('token');const date=document.getElementById('reportDate').value;try{const res=await fetch(`${API_URL}/api/attendance/${date}`,{headers:{'Authorization':`Bearer ${token}`}});if(!res.ok)throw new Error('Rapor alınamadı');const data=await res.json();const attendingList=document.getElementById('attending-list');const notAttendingList=document.getElementById('not-attending-list');attendingList.innerHTML='';notAttendingList.innerHTML='';let attendingCount=0;let notAttendingCount=0;data.forEach(item=>{if(item.will_attend){attendingList.innerHTML+=`<li>${item.user.username} (${item.user.department||'N/A'})</li>`;attendingCount++;}else{notAttendingList.innerHTML+=`<li>${item.user.username} (${item.user.department||'N/A'})</li>`;notAttendingCount++;}});document.getElementById('attending-count').textContent=attendingCount;document.getElementById('not-attending-count').textContent=notAttendingCount;document.getElementById('report-title').textContent=`${new Date(date).toLocaleDateString('tr-TR')} Tarihli Rapor`;document.getElementById('report-results').style.display='block';}catch(err){alert('Hata: '+err.message);}}
+        
+        function setDefaultDates(){document.getElementById('menuDate').value=new Date().toISOString().split('T')[0];}
+        
+        async function populateFilters() {
+            const token = localStorage.getItem('token');
+            const userFilter = document.getElementById('userFilter');
+            const departmentFilter = document.getElementById('departmentFilter');
+            if (userFilter.options.length > 1 && ALL_USERS_CACHE.length > 0) return;
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/menu/`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        date,
-                        meal_id,
-                        meal_type
-                    })
+                const response = await fetch(`${API_URL}/api/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) return;
+                const users = await response.json();
+                ALL_USERS_CACHE = users;
+                const departments = new Set();
+                userFilter.innerHTML = '<option value="">Tümü</option>';
+                users.forEach(user => {
+                    const userOption = document.createElement('option');
+                    userOption.value = user.id;
+                    userOption.textContent = user.username;
+                    userFilter.appendChild(userOption);
+                    if (user.department) departments.add(user.department);
                 });
-
-                if (!response.ok) {
-                    throw new Error('Menü planı eklenemedi');
-                }
-
-                const newPlan = await response.json();
-                menuPlans.push(newPlan);
-                updateMenuPlansTable();
-                
-                document.getElementById('menuForm').reset();
-                setDefaultDates();
-                showMessage('menuMessage', 'Menü planı başarıyla eklendi!', 'success');
-            } catch (error) {
-                console.error('Menü planı ekleme hatası:', error);
-                showMessage('menuMessage', 'Menü planı eklenirken hata oluştu', 'error');
-            }
-        }
-
-        async function deleteMenuPlan(id) {
-            if (!confirm('Bu menü planını silmek istediğinize emin misiniz?')) {
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/menu/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                departmentFilter.innerHTML = '<option value="">Tümü</option>';
+                departments.forEach(dep => {
+                    const depOption = document.createElement('option');
+                    depOption.value = dep;
+                    depOption.textContent = dep;
+                    departmentFilter.appendChild(depOption);
                 });
-
-                if (!response.ok) {
-                    throw new Error('Menü planı silinemedi');
-                }
-
-                menuPlans = menuPlans.filter(plan => plan.id !== id);
-                updateMenuPlansTable();
-                showMessage('menuMessage', 'Menü planı başarıyla silindi!', 'success');
-            } catch (error) {
-                console.error('Menü planı silme hatası:', error);
-                showMessage('menuMessage', 'Menü planı silinirken hata oluştu', 'error');
-            }
+            } catch (error) { console.error("Filtreler için veri yüklenemedi:", error); }
         }
-
-        function filterMenuPlans() {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            
-            let filteredPlans = menuPlans;
-            
-            if (startDate) {
-                filteredPlans = filteredPlans.filter(plan => plan.date >= startDate);
-            }
-            
-            if (endDate) {
-                filteredPlans = filteredPlans.filter(plan => plan.date <= endDate);
-            }
-
-            // Geçici olarak filtrelenmiş planları göster
-            const originalPlans = [...menuPlans];
-            menuPlans = filteredPlans;
-            updateMenuPlansTable();
-            
-            // 5 saniye sonra orijinal planları geri yükle
-            setTimeout(() => {
-                menuPlans = originalPlans;
-                updateMenuPlansTable();
-            }, 5000);
-        }
-
-        // Dashboard İstatistikleri
-        async function loadDashboardStats() {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/stats/dashboard`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('İstatistikler yüklenemedi');
-                }
-
-                const stats = await response.json();
-                
-                document.getElementById('totalMeals').textContent = stats.total_meals;
-                document.getElementById('totalCategories').textContent = stats.total_categories;
-                document.getElementById('todaySelections').textContent = stats.today_selections;
-                document.getElementById('activeUsers').textContent = stats.active_users;
-
-                // Son aktiviteler
-                const activitiesHTML = stats.recent_activities
-                    .map(activity => `<p style="padding: 8px 0; border-bottom: 1px solid #eee;">📝 ${activity}</p>`)
-                    .join('');
-                document.getElementById('recentActivities').innerHTML = activitiesHTML;
-            } catch (error) {
-                console.error('Dashboard istatistikleri yükleme hatası:', error);
-            }
-        }
-
-        // Raporlar
-        function generateReport() {
-            const startDate = document.getElementById('reportStartDate').value;
-            const endDate = document.getElementById('reportEndDate').value;
-
-            if (!startDate || !endDate) {
-                alert('Başlangıç ve bitiş tarihi gerekli!');
-                return;
-            }
-
-            // Simüle edilmiş rapor verisi
-            const reportData = [
-                { meal: 'Izgara Tavuk', date: '2025-01-20', selections: 25, percentage: 65 },
-                { meal: 'Mercimek Çorbası', date: '2025-01-20', selections: 30, percentage: 78 },
-                { meal: 'Sütlaç', date: '2025-01-20', selections: 18, percentage: 47 },
-                { meal: 'Köfte', date: '2025-01-21', selections: 22, percentage: 58 },
-                { meal: 'Domates Çorbası', date: '2025-01-21', selections: 28, percentage: 74 }
-            ];
-
-            const reportHTML = `
-                <div style="margin-top: 20px;">
-                    <h4>📊 ${formatDate(startDate)} - ${formatDate(endDate)} Arası Yemek Seçim Raporu</h4>
-                    <table style="width: 100%; margin-top: 15px;">
-                        <thead>
-                            <tr style="background: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left;">Yemek Adı</th>
-                                <th style="padding: 12px; text-align: left;">Tarih</th>
-                                <th style="padding: 12px; text-align: center;">Seçim Sayısı</th>
-                                <th style="padding: 12px; text-align: center;">Yüzde</th>
-                                <th style="padding: 12px; text-align: left;">Durum</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${reportData.map(item => `
-                                <tr>
-                                    <td style="padding: 10px;">${item.meal}</td>
-                                    <td style="padding: 10px;">${formatDate(item.date)}</td>
-                                    <td style="padding: 10px; text-align: center;">${item.selections}</td>
-                                    <td style="padding: 10px; text-align: center;">%${item.percentage}</td>
-                                    <td style="padding: 10px;">
-                                        ${item.percentage > 70 ? '🟢 Popüler' : 
-                                          item.percentage > 50 ? '🟡 Orta' : '🔴 Düşük'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                
-                    <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px;">
-                        <h5>📈 Özet:</h5>
-                        <p>• En popüler yemek: <strong>Mercimek Çorbası (%78)</strong></p>
-                        <p>• Toplam seçim: <strong>123</strong></p>
-                        <p>• Ortalama katılım: <strong>%64</strong></p>
-                        <p>• En az tercih edilen: <strong>Sütlaç (%47)</strong></p>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('reportResults').innerHTML = reportHTML;
-        }
-
-        // Yardımcı fonksiyonlar
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('tr-TR');
-        }
-
-        function showMessage(elementId, message, type) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = `message message-${type}`;
-            element.style.display = 'block';
-            
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
-        }
-
-        // Çıkış fonksiyonu
-        function logout() {
-            if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
-                localStorage.removeItem('user');
-                localStorage.removeItem('token');
-                window.location.href = 'index.html';
-            }
-        }
-
-        // Sayfa değiştiğinde verileri yenile
-        function showSection(sectionName) {
-            // Tüm section'ları gizle
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Tüm nav item'lardan active class'ını kaldır
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Seçilen section'ı göster
-            document.getElementById(sectionName).classList.add('active');
-            
-            // Seçilen nav item'a active class'ı ekle
-            event.target.classList.add('active');
-
-            // Section'a özel işlemler
-            if (sectionName === 'dashboard') {
-                updateDashboardStats();
-            }
-        }
-
-        // Klavye kısayolları
-        document.addEventListener('keydown', function(e) {
-            // Ctrl+1-5 ile hızlı sayfa değiştirme
-            if (e.ctrlKey) {
-                switch(e.key) {
-                    case '1':
-                        e.preventDefault();
-                        document.querySelector('.nav-item').click();
-                        break;
-                    case '2':
-                        e.preventDefault();
-                        document.querySelectorAll('.nav-item')[1].click();
-                        break;
-                    case '3':
-                        e.preventDefault();
-                        document.querySelectorAll('.nav-item')[2].click();
-                        break;
-                    case '4':
-                        e.preventDefault();
-                        document.querySelectorAll('.nav-item')[3].click();
-                        break;
-                    case '5':
-                        e.preventDefault();
-                        document.querySelectorAll('.nav-item')[4].click();
-                        break;
-                }
-            }
-        });
-
-        // Otomatik veri yenileme (her 30 saniyede dashboard güncellemesi)
-        setInterval(() => {
-            if (document.getElementById('dashboard').classList.contains('active')) {
-                updateDashboardStats();
-            }
-        }, 30000);
     </script>
 </body>
 </html>

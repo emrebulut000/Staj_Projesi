@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yemekhane Menüsü - Kullanıcı</title>
+    <title>Yemekhane Sistemi - Kullanıcı</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .selected-yes {
-            border-color: #10b981;
-            background-color: #ecfdf5;
-        }
-        .selected-no {
-            border-color: #ef4444;
-            background-color: #fef2f2;
-        }
-        .today-highlight {
-            box-shadow: 0 0 0 2px #3b82f6;
-        }
+        .selected-yes { border-color: #10b981; background-color: #ecfdf5; }
+        .selected-no { border-color: #ef4444; background-color: #fef2f2; }
+        .today-highlight { box-shadow: 0 0 0 2px #3b82f6; }
+        .main-tab { background-color: white; color: #374151; border-color: transparent; transition: all 0.2s ease-in-out; }
+        .main-tab.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+        .view-btn { background-color: white; color: #4b5563; }
+        .view-btn.active { background-color: #4f46e5; color: white; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -25,296 +23,393 @@
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
                     <span class="text-2xl mr-3">🍽️</span>
-                    <h1 class="text-xl font-semibold text-gray-900">Yemekhane Menüsü</h1>
+                    <h1 class="text-xl font-semibold text-gray-900">Kullanıcı Paneli</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <span class="text-gray-600" id="userName"></span>
-                    <button class="text-blue-600 hover:text-blue-800" onclick="logout()">Çıkış</button>
+                    <button class="text-indigo-600 hover:text-indigo-800" onclick="logout()">Çıkış</button>
                 </div>
             </div>
         </div>
     </header>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8">
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                <button onclick="showPage('yemekhane')" id="yemekhane-tab" class="main-tab whitespace-nowrap py-3 px-6 border-b-2 font-medium text-sm rounded-t-lg">Yemekhane Menüsü</button>
+                <button onclick="showPage('mesai')" id="mesai-tab" class="main-tab whitespace-nowrap py-3 px-6 border-b-2 font-medium text-sm rounded-t-lg">Fazla Mesai Taleplerim</button>
+            </nav>
+        </div>
+
+        <div id="yemekhane-page" class="page-content">
             <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div class="flex gap-2">
-                    <button onclick="setActiveView('daily')" id="daily-btn" class="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white">
-                        Günlük
-                    </button>
-                    <button onclick="setActiveView('weekly')" id="weekly-btn" class="px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100">
-                        Haftalık
-                    </button>
-                    <button onclick="setActiveView('monthly')" id="monthly-btn" class="px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100">
-                        Aylık
-                    </button>
+                    <button onclick="setActiveView('daily')" id="daily-btn" class="view-btn px-4 py-2 rounded-lg font-medium">Günlük</button>
+                    <button onclick="setActiveView('weekly')" id="weekly-btn" class="view-btn px-4 py-2 rounded-lg font-medium">Haftalık</button>
+                    <button onclick="setActiveView('monthly')" id="monthly-btn" class="view-btn px-4 py-2 rounded-lg font-medium">Aylık</button>
                 </div>
-
                 <div class="bg-blue-100 px-4 py-2 rounded-lg">
-                    <span class="text-blue-800 font-medium" id="selected-count">
-                        Seçilen günler: 0
-                    </span>
+                    <span class="text-blue-800 font-medium" id="selected-count">Değiştirilen gün: 0</span>
                 </div>
             </div>
-
             <div class="flex items-center justify-center space-x-4 mb-6">
-                <button onclick="navigateDate(-1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">
-                    ← Önceki
-                </button>
+                <button onclick="navigateDate(-1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">← Önceki</button>
                 <span class="text-lg font-semibold text-gray-800" id="current-period"></span>
-                <button onclick="navigateDate(1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">
-                    Sonraki →
-                </button>
+                <button onclick="navigateDate(1)" class="p-2 rounded-lg bg-white hover:bg-gray-100 shadow">Sonraki →</button>
+            </div>
+            <div class="mb-8" id="menu-container"></div>
+            <div class="text-center">
+                <button onclick="saveAttendanceSelections()" id="save-btn" class="bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-3 rounded-lg font-semibold shadow-lg" disabled>Seçimlerimi Kaydet (0 gün)</button>
             </div>
         </div>
 
-        <div class="mb-8" id="menu-container">
-            <!-- Menü kartları buraya gelecek -->
-        </div>
-
-        <div class="text-center">
-            <button onclick="saveSelections()" id="save-btn" class="bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-3 rounded-lg font-semibold shadow-lg" disabled>
-                Seçimlerimi Kaydet (0 gün)
-            </button>
-        </div>
-
-        <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 class="font-medium text-blue-900 mb-2">💡 Bilgilendirme</h3>
-            <ul class="text-sm text-blue-800 space-y-1">
-                <li>• Yemekhane servisi 7 gün 24 saat hizmet vermektedir</li>
-                <li>• Öğle yemeği servisi: 12:00-14:00 saatleri arasında</li>
-                <li>• Seçimlerinizi en geç bir gün önceden yapmanız gerekmektedir</li>
-                <li>• Menü değişiklikleri olabilir, güncel menü için sayfayı yenileyin</li>
-            </ul>
+        <div id="mesai-page" class="page-content">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Fazla Mesai Talepleri</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Yeni Talep Oluştur</h3>
+                        <form id="overtimeForm" class="space-y-4">
+                            <div>
+                                <label for="department" class="block text-sm font-medium text-gray-700">Departman</label>
+                                <input type="text" id="department" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Örn: Yazılım Geliştirme">
+                            </div>
+                            <div>
+                                <label for="overtimeDate" class="block text-sm font-medium text-gray-700">Tarih</label>
+                                <input type="date" id="overtimeDate" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="startTime" class="block text-sm font-medium text-gray-700">Başlangıç Saati</label>
+                                    <input type="time" id="startTime" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label for="endTime" class="block text-sm font-medium text-gray-700">Bitiş Saati</label>
+                                    <input type="time" id="endTime" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="reason" class="block text-sm font-medium text-gray-700">Yapılan İşin Açıklaması</label>
+                                <textarea id="reason" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                            </div>
+                            <div>
+                                <button type="submit" class="w-full justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Talep Gönder
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                     <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Mevcut Taleplerim</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departman</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Saatler</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overtime-requests-table" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8000';
+        const API_URL = 'http://127.0.0.1:8000';
+        let currentPage = 'yemekhane';
+        let attendanceSelections = {};
         let activeView = 'daily';
         let currentDate = new Date();
-        let attendanceSelections = {};
+        let currentMenus = []; 
 
-        // Sayfa yüklendiğinde çalışacak
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
-            loadMenuData();
-            updateSelectionCount();
+            showPage(currentPage);
+            document.getElementById('overtimeForm')?.addEventListener('submit', handleOvertimeSubmit);
         });
 
-        // Yetki kontrolü
         function checkAuth() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
-            
-            if (!token) {
-                window.location.href = 'index.html';
-                return;
-            }
-
+            if (!token) { window.location.href = 'index.html'; return; }
             document.getElementById('userName').textContent = username || 'Kullanıcı';
-        }
-
-        // Menü verilerini yükle
-        async function loadMenuData() {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/menu/${formatDate(currentDate)}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Menü verisi alınamadı');
-                }
-
-                const data = await response.json();
-                updateDisplay(data);
-            } catch (error) {
-                console.error("Menü verisi yüklenirken hata:", error);
-                document.getElementById('menu-container').innerHTML = 
-                    '<p class="text-red-500 text-center">Menü verisi yüklenemedi. Lütfen daha sonra tekrar deneyin.</p>';
+            
+            // Departman bilgisini localStorage'dan alıp forma yerleştir.
+            const department = localStorage.getItem('department');
+            if (department && document.getElementById('department')) {
+                const depInput = document.getElementById('department');
+                depInput.value = department;
+                depInput.readOnly = true; // Kullanıcının değiştirmesini engelle
+                depInput.style.backgroundColor = '#f3f4f6'; // Görsel olarak pasif göster
             }
         }
 
-        // Seçimleri kaydet
-        async function saveSelections() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'index.html';
-                return;
-            }
+        function showPage(pageName) {
+            currentPage = pageName;
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.getElementById(`${pageName}-page`).classList.add('active');
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`${pageName}-tab`).classList.add('active');
 
-            const selections = Object.entries(attendanceSelections)
-                .filter(([date, selection]) => selection !== undefined)
-                .map(([date, will_attend]) => ({
-                    date: date,
-                    will_attend: will_attend
-                }));
-
-            try {
-                const response = await fetch(`${API_URL}/attendance/`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify(selections)
-                });
-
-                if (response.ok) {
-                    alert(`${selections.length} gün için seçimleriniz kaydedildi!`);
-                    loadMenuData(); // Güncel durumu yeniden yükle
-                } else {
-                    throw new Error('Kayıt başarısız');
-                }
-            } catch (error) {
-                console.error("Hata:", error);
-                alert("Bir hata oluştu: " + error.message);
+            if (pageName === 'mesai') {
+                loadMyOvertimeRequests();
+            } else if (pageName === 'yemekhane') {
+                setActiveView('daily');
             }
         }
 
-        // Çıkış
         function logout() {
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                localStorage.removeItem('is_admin');
+                localStorage.clear();
                 window.location.href = 'index.html';
             }
         }
 
-        // Görünüm değiştirme
+        async function loadMyOvertimeRequests() {
+            const token = localStorage.getItem('token');
+            const tableBody = document.getElementById('overtime-requests-table');
+            try {
+                const response = await fetch(`${API_URL}/api/overtime/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Talepler yüklenemedi');
+                const requests = await response.json();
+                
+                tableBody.innerHTML = requests.map(req => {
+                    let statusClass = '';
+                    switch (req.status) {
+                        case 'Onaylandı':
+                            statusClass = 'bg-green-100 text-green-800';
+                            break;
+                        case 'Yönetici Tarafından Reddedildi':
+                        case 'Reddedildi':
+                            statusClass = 'bg-red-100 text-red-800';
+                            break;
+                        case 'İK Onayı Bekliyor':
+                            statusClass = 'bg-blue-100 text-blue-800';
+                            break;
+                        case 'Yönetici Onayı Bekliyor':
+                        default:
+                            statusClass = 'bg-yellow-100 text-yellow-800';
+                            break;
+                    }
+
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${req.department}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(req.date).toLocaleDateString('tr-TR')}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${req.start_time.substring(0,5)} - ${req.end_time.substring(0,5)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                    ${req.status}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="4" class="text-center py-4">Hiç talebiniz bulunmuyor.</td></tr>';
+
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+        
+        // Diğer Javascript fonksiyonları (yemekhane menüsü ile ilgili) aynı kalabilir.
+        // handleOvertimeSubmit, setActiveView, loadMenuData etc.
+        function formatDate(date) { return date.toISOString().split('T')[0]; }
+
+        function getPeriod(view, date) {
+            let startDate = new Date(date);
+            if (view === 'daily') {
+                return { start: startDate, end: startDate };
+            }
+            if (view === 'weekly') {
+                const day = startDate.getDay();
+                const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); 
+                const start = new Date(startDate.setDate(diff));
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                return { start, end };
+            }
+            if (view === 'monthly') {
+                const start = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                const end = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+                return { start, end };
+            }
+        }
+
         function setActiveView(view) {
             activeView = view;
-            
-            document.querySelectorAll('[id$="-btn"]').forEach(btn => {
-                btn.className = 'px-4 py-2 rounded-lg font-medium bg-white text-gray-700 hover:bg-gray-100';
-            });
-            document.getElementById(view + '-btn').className = 'px-4 py-2 rounded-lg font-medium bg-blue-600 text-white';
-            
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(view + '-btn').classList.add('active');
             loadMenuData();
         }
 
-        // Tarih navigasyonu
         function navigateDate(direction) {
-            const newDate = new Date(currentDate);
-            if (activeView === 'daily') {
-                newDate.setDate(newDate.getDate() + direction);
-            } else if (activeView === 'weekly') {
-                newDate.setDate(newDate.getDate() + (direction * 7));
-            } else if (activeView === 'monthly') {
-                newDate.setMonth(newDate.getMonth() + direction);
-            }
-            currentDate = newDate;
+            if (activeView === 'daily') currentDate.setDate(currentDate.getDate() + direction);
+            else if (activeView === 'weekly') currentDate.setDate(currentDate.getDate() + (direction * 7));
+            else if (activeView === 'monthly') currentDate.setMonth(currentDate.getMonth() + direction, 1);
             loadMenuData();
         }
 
-        // Katılım seçimi
+        async function loadMenuData() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = '<p class="text-center text-gray-500">Menüler yükleniyor...</p>';
+            
+            const period = getPeriod(activeView, new Date(currentDate));
+            updatePeriodTitle(period);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/menus?start_date=${formatDate(period.start)}&end_date=${formatDate(period.end)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Menü verileri alınamadı');
+                currentMenus = await response.json(); 
+                renderMenuCards(period, currentMenus);
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500 text-center">${error.message}</p>`;
+            }
+        }
+
+        function renderMenuCards(period, menus) {
+            const container = document.getElementById('menu-container');
+            const menuMap = new Map(menus.map(m => [m.date, m]));
+            
+            let html = '';
+            let loopDate = new Date(period.start);
+
+            while (loopDate <= period.end) {
+                const dateStr = formatDate(loopDate);
+                const menuData = menuMap.get(dateStr);
+                
+                const isSelected = attendanceSelections[dateStr];
+                const isToday = dateStr === formatDate(new Date());
+                const isPast = new Date(dateStr) < new Date(new Date().setHours(0, 0, 0, 0));
+
+                let cardClass = 'bg-white rounded-lg p-4 shadow-md border-2 transition-all flex flex-col';
+                if (isSelected === true) cardClass += ' selected-yes';
+                else if (isSelected === false) cardClass += ' selected-no';
+                else cardClass += ' border-transparent';
+                if (isToday) cardClass += ' today-highlight';
+                if (loopDate.getDay() === 0 || loopDate.getDay() === 6) cardClass += ' bg-gray-50';
+
+                html += `<div class="${cardClass}">`;
+                html += `<h3 class="font-semibold mb-2 text-gray-800">${loopDate.toLocaleDateString('tr-TR', { weekday: 'long', day: '2-digit', month: 'long' })}</h3>`;
+                
+                if (menuData) {
+                    html += `<ul class="space-y-1 text-sm text-gray-600 flex-grow">
+                                <li><span class="font-medium text-gray-700">Çorba:</span> ${menuData.menu_items.Corbasi || '-'}</li>
+                                <li><span class="font-medium text-gray-700">Ana Y.:</span> ${menuData.menu_items.Ana_Yemek || '-'}</li>
+                                <li><span class="font-medium text-gray-700">Yan Y.:</span> ${menuData.menu_items.Yan_Yemek || '-'}</li>
+                                <li><span class="font-medium text-gray-700">Tatlı:</span> ${menuData.menu_items.Tatli || '-'}</li>
+                            </ul>`;
+                } else {
+                    html += `<div class="flex-grow flex items-center justify-center text-gray-400 text-sm">Menü Belirtilmemiş</div>`;
+                }
+
+                if (!isPast && menuData) {
+                    html += `<div class="space-y-2 pt-3 mt-3 border-t">
+                                <div class="flex space-x-2">
+                                    <button onclick="handleAttendanceChange('${dateStr}', true)" class="flex-1 text-xs py-1 px-2 rounded font-semibold transition-colors ${isSelected === true ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">Evet</button>
+                                    <button onclick="handleAttendanceChange('${dateStr}', false)" class="flex-1 text-xs py-1 px-2 rounded font-semibold transition-colors ${isSelected === false ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">Hayır</button>
+                                </div>
+                            </div>`;
+                }
+                html += `</div>`;
+                loopDate.setDate(loopDate.getDate() + 1);
+            }
+            
+            const gridClass = activeView === 'daily' ? 'grid grid-cols-1 max-w-md mx-auto gap-4' : 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4';
+            container.className = gridClass;
+            container.innerHTML = html;
+        }
+
         function handleAttendanceChange(dateStr, willAttend) {
             attendanceSelections[dateStr] = willAttend;
             updateSelectionCount();
-            updateDisplay();
+            const period = getPeriod(activeView, new Date(currentDate));
+            renderMenuCards(period, currentMenus);
         }
 
-        // Seçim sayısını güncelle
         function updateSelectionCount() {
-            const count = Object.values(attendanceSelections).filter(selection => selection === true).length;
-            document.getElementById('selected-count').textContent = `Seçilen günler: ${count}`;
-            
+            const count = Object.keys(attendanceSelections).length;
             const saveBtn = document.getElementById('save-btn');
+            document.getElementById('selected-count').textContent = `Değiştirilen gün: ${count}`;
             if (count > 0) {
                 saveBtn.className = 'bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg transition-colors';
                 saveBtn.disabled = false;
-                saveBtn.textContent = `Seçimlerimi Kaydet (${count} gün)`;
+                saveBtn.textContent = `Seçimleri Kaydet (${count} gün)`;
             } else {
                 saveBtn.className = 'bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-3 rounded-lg font-semibold shadow-lg';
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Seçimlerimi Kaydet (0 gün)';
             }
         }
-
-        // Tarih formatlama
-        function formatDate(date) {
-            return date.toISOString().split('T')[0];
-        }
-
-        // Tarih başlığını güncelle
-        function updatePeriodTitle() {
+        
+        function updatePeriodTitle(period) {
             const periodElement = document.getElementById('current-period');
             if (activeView === 'monthly') {
-                periodElement.textContent = currentDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                periodElement.textContent = period.start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
             } else if (activeView === 'weekly') {
-                const startOfWeek = new Date(currentDate);
-                startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-                periodElement.textContent = `${startOfWeek.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                periodElement.textContent = `${period.start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} - ${period.end.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
             } else {
-                periodElement.textContent = currentDate.toLocaleDateString('tr-TR');
+                periodElement.textContent = period.start.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }
         }
 
-        // Menü kartlarını güncelle
-        function updateDisplay(menuData) {
-            updatePeriodTitle();
-            
-            const container = document.getElementById('menu-container');
-            if (!menuData || !menuData.menu_items) {
-                container.innerHTML = '<p class="text-center text-gray-500">Bu tarih için menü bilgisi bulunmamaktadır.</p>';
-                return;
+        async function saveAttendanceSelections() {
+            const token = localStorage.getItem('token');
+            const selections = Object.entries(attendanceSelections).map(([date, will_attend]) => ({ date, will_attend }));
+            if (selections.length === 0) return;
+            try {
+                const response = await fetch(`${API_URL}/attendance/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify(selections)
+                });
+                if (!response.ok) throw new Error('Kayıt başarısız');
+                alert(`${selections.length} gün için seçimleriniz kaydedildi!`);
+                attendanceSelections = {};
+                updateSelectionCount();
+            } catch (error) {
+                alert("Bir hata oluştu: " + error.message);
             }
+        }
 
-            const gridClass = activeView === 'daily' ? 'grid grid-cols-1 max-w-2xl mx-auto gap-6' :
-                            activeView === 'weekly' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6' :
-                            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-            
-            container.className = gridClass;
-            
-            const dateStr = formatDate(currentDate);
-            const isSelected = attendanceSelections[dateStr];
-            const isToday = dateStr === formatDate(new Date());
-            const isPast = currentDate < new Date().setHours(0,0,0,0);
-
-            const cardClass = `bg-white rounded-lg p-6 shadow-md border-2 transition-all ${
-                isSelected === true ? 'selected-yes' : 
-                isSelected === false ? 'selected-no' : 
-                'border-gray-200 hover:border-blue-300'
-            } ${isToday ? 'today-highlight' : ''}`;
-
-            const menuHtml = `
-                <div class="${cardClass}">
-                    <h3 class="text-lg font-semibold mb-4">${currentDate.toLocaleDateString('tr-TR', {weekday: 'long'})}</h3>
-                    <ul class="space-y-2 mb-6">
-                        <li class="text-gray-600"><span class="font-medium">Çorba:</span> ${menuData.menu_items.Corbasi}</li>
-                        <li class="text-gray-600"><span class="font-medium">Ana Yemek:</span> ${menuData.menu_items.Ana_Yemek}</li>
-                        <li class="text-gray-600"><span class="font-medium">Yan Yemek:</span> ${menuData.menu_items.Yan_Yemek}</li>
-                        <li class="text-gray-600"><span class="font-medium">Tatlı:</span> ${menuData.menu_items.Tatli}</li>
-                    </ul>
-                    ${!isPast ? `
-                        <div class="space-y-3">
-                            <p class="text-sm font-medium text-gray-700">Yemekhaneye gelecek misiniz?</p>
-                            <div class="flex space-x-3">
-                                <button onclick="handleAttendanceChange('${dateStr}', true)" 
-                                    class="flex-1 py-2 px-4 rounded ${isSelected === true ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
-                                    Evet
-                                </button>
-                                <button onclick="handleAttendanceChange('${dateStr}', false)"
-                                    class="flex-1 py-2 px-4 rounded ${isSelected === false ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
-                                    Hayır
-                                </button>
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="bg-gray-100 p-3 rounded-lg text-center text-gray-500">
-                            Geçmiş tarih için seçim yapılamaz
-                        </div>
-                    `}
-                </div>
-            `;
-
-            container.innerHTML = menuHtml;
+        async function handleOvertimeSubmit(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('token');
+            const payload = {
+                department: document.getElementById('department').value,
+                date: document.getElementById('overtimeDate').value,
+                start_time: document.getElementById('startTime').value,
+                end_time: document.getElementById('endTime').value,
+                reason: document.getElementById('reason').value,
+            };
+            try {
+                const response = await fetch(`${API_URL}/api/overtime`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Talep oluşturulamadı');
+                }
+                alert('Fazla mesai talebiniz başarıyla gönderildi!');
+                document.getElementById('overtimeForm').reset();
+                checkAuth(); // Departman bilgisini tekrar doldurmak için
+                loadMyOvertimeRequests();
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
         }
     </script>
 </body>
