@@ -8,3 +8,6 @@ bcrypt>=4.0.1
 python-multipart>=0.0.5
 python-dateutil>=2.8.2
 fastapi-mail
+PySide6>=6.5.0
+pandas>=2.0.0
+openpyxl>=3.1.0
