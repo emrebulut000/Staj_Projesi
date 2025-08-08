@@ -49,7 +49,7 @@
         .status-beklemede-yonetici { background-color: #f59e0b; }
         .status-beklemede-ik { background-color: #3b82f6; }
         .status-onaylandi { background-color: #10b981; }
-        .status-reddedildi, .status-yonetici-tarafindan-reddedildi { background-color: #ef4444; }
+        .status-reddedildi, .status-departman-yoneticisi-tarafindan-reddedildi { background-color: #ef4444; }
         .filter-container { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
         .filter-group { display: flex; flex-direction: column; }
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
@@ -86,20 +86,99 @@
             <div id="menu-planning" class="page-section">
                 <h2 class="page-title">Menü Planlama</h2>
                 <div class="message" id="menuMessage"></div>
+                
+                <!-- Excel İçe Aktarma Bölümü -->
+                <div class="card" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #cbd5e1;">
+                    <h3 style="color: #1e293b; display: flex; align-items: center; gap: 10px;">
+                        📊 Excel'den Menü İçe Aktarma
+                    </h3>
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #475569;">
+                        <strong>📝 Excel Dosyası Formatı:</strong><br>
+                        • Sütun A: Tarih (YYYY-MM-DD formatında, örn: 2025-08-07)<br>
+                        • Sütun B: Çorba<br>
+                        • Sütun C: Ana Yemek<br>
+                        • Sütun D: Yan Yemek<br>
+                        • Sütun E: Tatlı<br>
+                        • İlk satır başlık olmalıdır
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button type="button" class="btn" onclick="downloadTemplate()" 
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; display: flex; align-items: center; gap: 8px;">
+                            📋 Excel Şablonu İndir
+                        </button>
+                        <div style="position: relative; overflow: hidden; display: inline-block;">
+                            <button type="button" class="btn" onclick="document.getElementById('excelFile').click()"
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; display: flex; align-items: center; gap: 8px;">
+                                📂 Excel Dosyası Seç ve İçe Aktar
+                            </button>
+                            <input type="file" id="excelFile" accept=".xlsx,.xls" style="position: absolute; left: -9999px;" onchange="importExcel()">
+                        </div>
+                    </div>
+                    <div id="importProgress" style="margin-top: 15px; display: none;">
+                        <div style="background: #e5e7eb; border-radius: 10px; overflow: hidden;">
+                            <div id="progressBar" style="background: linear-gradient(90deg, #10b981, #059669); height: 8px; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <div id="progressText" style="margin-top: 8px; font-size: 14px; color: #6b7280;">İşleniyor...</div>
+                    </div>
+                </div>
+                
+                <!-- Manuel Menü Ekleme Bölümü -->
                 <div class="card">
-                    <h3>Yeni Menü Oluştur</h3>
+                    <h3 style="color: #1e293b; display: flex; align-items: center; gap: 10px;">
+                        ✏️ Manuel Menü Ekleme
+                    </h3>
                     <form id="menuForm">
                         <div class="form-group"><label for="menuDate">Tarih:</label><input type="date" id="menuDate" required></div>
                         <div class="form-row">
-                            <div class="form-group"><label for="menuSoup">Çorba:</label><input type="text" id="menuSoup"></div>
-                            <div class="form-group"><label for="menuMainCourse">Ana Yemek:</label><input type="text" id="menuMainCourse" required></div>
+                            <div class="form-group"><label for="menuSoup">Çorba:</label><input type="text" id="menuSoup" placeholder="Örn: Mercimek Çorbası"></div>
+                            <div class="form-group"><label for="menuMainCourse">Ana Yemek:</label><input type="text" id="menuMainCourse" placeholder="Örn: Tavuk Schnitzel" required></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group"><label for="menuSideDish">Yan Yemek:</label><input type="text" id="menuSideDish"></div>
-                            <div class="form-group"><label for="menuDessert">Tatlı / Meyve:</label><input type="text" id="menuDessert"></div>
+                            <div class="form-group"><label for="menuSideDish">Yan Yemek:</label><input type="text" id="menuSideDish" placeholder="Örn: Pilav"></div>
+                            <div class="form-group"><label for="menuDessert">Tatlı / Meyve:</label><input type="text" id="menuDessert" placeholder="Örn: Muhallebi"></div>
                         </div>
-                        <button type="submit" class="btn btn-primary">📅 Menü Oluştur</button>
+                        <button type="submit" class="btn btn-primary">➕ Menü Oluştur</button>
                     </form>
+                </div>
+                
+                <!-- Mevcut Menüler Bölümü -->
+                <div class="card">
+                    <h3 style="color: #1e293b; display: flex; align-items: center; gap: 10px;">
+                        📋 Mevcut Menüler
+                    </h3>
+                    <div style="margin-bottom: 20px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="menuStartDate">Başlangıç Tarihi:</label>
+                                <input type="date" id="menuStartDate">
+                            </div>
+                            <div class="form-group">
+                                <label for="menuEndDate">Bitiş Tarihi:</label>
+                                <input type="date" id="menuEndDate">
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: end;">
+                                <button type="button" class="btn btn-primary" onclick="loadExistingMenus()">🔍 Menüleri Listele</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Admin Filtreleme Seçenekleri -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #374151;">Görünüm Filtreleri:</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                                    <input type="checkbox" id="adminHideWeekends" onchange="loadExistingMenus()">
+                                    🏖️ Hafta sonlarını gizle
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                                    <input type="checkbox" id="adminHideEmptyDays" onchange="loadExistingMenus()">
+                                    📋 Boş günleri gizle
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="existingMenusContainer">
+                        <p style="text-align: center; color: #6b7280; font-style: italic;">Menüleri görüntülemek için tarih aralığı seçin ve "Menüleri Listele" butonuna tıklayın.</p>
+                    </div>
                 </div>
             </div>
             <div id="overtime-requests" class="page-section">
@@ -506,7 +585,299 @@
         
         async function loadAttendanceReport(){const token=localStorage.getItem('token');const date=document.getElementById('reportDate').value;try{const res=await fetch(`${API_URL}/api/attendance/${date}`,{headers:{'Authorization':`Bearer ${token}`}});if(!res.ok)throw new Error('Rapor alınamadı');const data=await res.json();const attendingList=document.getElementById('attending-list');const notAttendingList=document.getElementById('not-attending-list');attendingList.innerHTML='';notAttendingList.innerHTML='';let attendingCount=0;let notAttendingCount=0;data.forEach(item=>{if(item.will_attend){attendingList.innerHTML+=`<li>${item.user.username} (${item.user.department||'N/A'})</li>`;attendingCount++;}else{notAttendingList.innerHTML+=`<li>${item.user.username} (${item.user.department||'N/A'})</li>`;notAttendingCount++;}});document.getElementById('attending-count').textContent=attendingCount;document.getElementById('not-attending-count').textContent=notAttendingCount;document.getElementById('report-title').textContent=`${new Date(date).toLocaleDateString('tr-TR')} Tarihli Rapor`;document.getElementById('report-results').style.display='block';}catch(err){alert('Hata: '+err.message);}}
         
-        function setDefaultDates(){document.getElementById('menuDate').value=new Date().toISOString().split('T')[0];}
+        function setDefaultDates(){
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('menuDate').value = today;
+            
+            // Mevcut menüler için varsayılan tarih aralığı (bugünden itibaren 30 gün)
+            document.getElementById('menuStartDate').value = today;
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 30);
+            document.getElementById('menuEndDate').value = endDate.toISOString().split('T')[0];
+        }
+        
+        // Mevcut menüleri yükleme fonksiyonu
+        async function loadExistingMenus() {
+            const startDate = document.getElementById('menuStartDate').value;
+            const endDate = document.getElementById('menuEndDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('Lütfen başlangıç ve bitiş tarihlerini seçin.');
+                return;
+            }
+            
+            // Loading göstergesi
+            const container = document.getElementById('existingMenusContainer');
+            container.innerHTML = '<p style="text-align: center; color: #6b7280; font-style: italic;">⏳ Menüler yükleniyor...</p>';
+            
+            try {
+                const token = localStorage.getItem('token');
+                // Cache'i bypass etmek için timestamp ekle
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${API_URL}/api/menus?start_date=${startDate}&end_date=${endDate}&_t=${timestamp}`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Menüler yüklenemedi');
+                
+                const menus = await response.json();
+                console.log('Yüklenen menüler:', menus); // Debug için
+                
+                // Filtreleme uygula
+                const hideWeekends = document.getElementById('adminHideWeekends').checked;
+                const hideEmptyDays = document.getElementById('adminHideEmptyDays').checked;
+                
+                const filteredMenus = menus.filter(menu => {
+                    const menuDate = new Date(menu.date);
+                    const dayOfWeek = menuDate.getDay();
+                    
+                    // Hafta sonu filtresi
+                    if (hideWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+                        return false;
+                    }
+                    
+                    // Boş gün filtresi
+                    if (hideEmptyDays) {
+                        const items = menu.menu_items || {};
+                        const isEmpty = !items.Corbasi && !items.Ana_Yemek && !items.Yan_Yemek && !items.Tatli;
+                        if (isEmpty) return false;
+                    }
+                    
+                    return true;
+                });
+                
+                renderExistingMenus(filteredMenus);
+            } catch (error) {
+                container.innerHTML = `<p style="text-align: center; color: #ef4444;">Hata: ${error.message}</p>`;
+                showMessage('menuMessage', 'Hata: ' + error.message, 'error');
+            }
+        }
+        
+        // Mevcut menüleri render etme fonksiyonu
+        function renderExistingMenus(menus) {
+            const container = document.getElementById('existingMenusContainer');
+            
+            if (menus.length === 0) {
+                // Filtre uygulanmış mı kontrol et
+                const hideWeekends = document.getElementById('adminHideWeekends').checked;
+                const hideEmptyDays = document.getElementById('adminHideEmptyDays').checked;
+                
+                if (hideWeekends || hideEmptyDays) {
+                    container.innerHTML = '<p style="text-align: center; color: #6b7280; font-style: italic;">Filtreleme sonucunda gösterilecek menü bulunamadı. Filtre seçeneklerini kontrol edin.</p>';
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #6b7280; font-style: italic;">Seçilen tarih aralığında menü bulunamadı.</p>';
+                }
+                return;
+            }
+            
+            // Debug için menü objelerini logla
+            console.log('Menü objeleri:', menus);
+            
+            const menuHtml = menus.map(menu => {
+                // Menu ID kontrolü
+                const menuId = menu.id;
+                if (!menuId) {
+                    console.error('Menü ID bulunamadı:', menu);
+                    return '';
+                }
+                
+                return `
+                    <div id="menu-${menuId}" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9fafb;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0; color: #374151;">
+                                📅 ${new Date(menu.date).toLocaleDateString('tr-TR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                                <small style="color: #6b7280; font-weight: normal;"> (ID: ${menuId})</small>
+                            </h4>
+                            <button id="delete-btn-${menuId}" class="btn-sm btn-delete" onclick="deleteMenu(${menuId}, '${menu.date}')" 
+                                    style="margin-left: auto;">
+                                🗑️ Sil
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 14px;">
+                            <div><strong>🍲 Çorba:</strong> ${menu.menu_items?.Corbasi || '-'}</div>
+                            <div><strong>🍖 Ana Yemek:</strong> ${menu.menu_items?.Ana_Yemek || '-'}</div>
+                            <div><strong>🍚 Yan Yemek:</strong> ${menu.menu_items?.Yan_Yemek || '-'}</div>
+                            <div><strong>🍰 Tatlı:</strong> ${menu.menu_items?.Tatli || '-'}</div>
+                        </div>
+                    </div>
+                `;
+            }).filter(html => html !== '').join('');
+            
+            container.innerHTML = menuHtml;
+            console.log('Render edilen menü sayısı:', menus.length); // Debug için
+        }
+        
+        // Menü silme fonksiyonu
+        async function deleteMenu(menuId, menuDate) {
+            console.log('deleteMenu çağrıldı:', { menuId, menuDate }); // Debug
+            
+            // Parametreleri kontrol et
+            if (!menuId || menuId === 'undefined') {
+                console.error('Geçersiz menü ID:', menuId);
+                showMessage('menuMessage', 'Hata: Geçersiz menü ID', 'error');
+                return;
+            }
+            
+            if (!confirm(`${new Date(menuDate).toLocaleDateString('tr-TR')} tarihli menüyü silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz ve ilgili katılım kayıtları da silinecektir.`)) {
+                return;
+            }
+            
+            // Silme işlemi sırasında butonu deaktive et
+            const deleteButton = document.getElementById(`delete-btn-${menuId}`);
+            if (deleteButton) {
+                deleteButton.disabled = true;
+                deleteButton.textContent = '⏳ Siliniyor...';
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Silme isteği gönderiliyor:', `${API_URL}/api/menu/${menuId}`); // Debug
+                
+                const response = await fetch(`${API_URL}/api/menu/${menuId}`, {
+                    method: 'DELETE',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                console.log('Silme response:', response.status, response.statusText); // Debug
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Silme hatası:', errorData); // Debug
+                    throw new Error(errorData.detail || 'Menü silinemedi');
+                }
+                
+                const result = await response.json();
+                console.log('Silme başarılı:', result); // Debug
+                
+                showMessage('menuMessage', 
+                    `Menü başarıyla silindi!\n\nSilinen menü ID: ${result.deleted_menu_id}\nSilinen katılım kaydı: ${result.deleted_attendance_count} adet`, 
+                    'success'
+                );
+                
+                // Kısa bir bekleyip listeyi yenile
+                setTimeout(() => {
+                    loadExistingMenus();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                showMessage('menuMessage', 'Hata: ' + error.message, 'error');
+                
+                // Hata durumunda butonu tekrar aktif et
+                if (deleteButton) {
+                    deleteButton.disabled = false;
+                    deleteButton.textContent = '🗑️ Sil';
+                }
+            }
+        }
+        
+        // Excel İşleme Fonksiyonları
+        async function downloadTemplate() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`${API_URL}/api/menu/excel-template`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Şablon indirilemedi');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'menu_template.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showMessage('menuMessage', '📋 Excel şablonu başarıyla indirildi!', 'success');
+            } catch (error) {
+                showMessage('menuMessage', 'Hata: ' + error.message, 'error');
+            }
+        }
+        
+        async function importExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('menuMessage', 'Lütfen bir dosya seçin', 'error');
+                return;
+            }
+            
+            // Progress göster
+            document.getElementById('importProgress').style.display = 'block';
+            document.getElementById('progressBar').style.width = '20%';
+            document.getElementById('progressText').textContent = 'Dosya yükleniyor...';
+            
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                document.getElementById('progressBar').style.width = '50%';
+                document.getElementById('progressText').textContent = 'Veriler işleniyor...';
+                
+                const response = await fetch(`${API_URL}/api/menu/import-excel`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                document.getElementById('progressBar').style.width = '80%';
+                document.getElementById('progressText').textContent = 'Sonuçlar kontrol ediliyor...';
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Yükleme başarısız');
+                }
+                
+                const result = await response.json();
+                
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressText').textContent = 'Tamamlandı!';
+                
+                // Sonuç mesajını oluştur
+                let message = `✅ İçe aktarma tamamlandı!\\n\\n`;
+                message += `📥 Yeni eklenen: ${result.imported_count} menü\\n`;
+                message += `🔄 Güncellenen: ${result.updated_count} menü`;
+                
+                if (result.error_count > 0) {
+                    message += `\\n\\n⚠️ Hatalar (${result.error_count}):\\n`;
+                    message += result.errors.slice(0, 5).join('\\n');
+                    if (result.errors.length > 5) {
+                        message += `\\n... ve ${result.errors.length - 5} hata daha`;
+                    }
+                }
+                
+                // Başarılı mesaj göster
+                showMessage('menuMessage', message.replace(/\\n/g, '<br>'), 'success');
+                
+                // Progress gizle
+                setTimeout(() => {
+                    document.getElementById('importProgress').style.display = 'none';
+                    document.getElementById('progressBar').style.width = '0%';
+                }, 2000);
+                
+                // Dosya input'unu temizle
+                fileInput.value = '';
+                
+            } catch (error) {
+                document.getElementById('importProgress').style.display = 'none';
+                showMessage('menuMessage', 'Hata: ' + error.message, 'error');
+                fileInput.value = '';
+            }
+        }
         
         async function populateFilters() {
             const token = localStorage.getItem('token');
