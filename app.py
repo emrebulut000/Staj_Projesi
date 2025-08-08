@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, date, time
 from typing import List, Annotated, Optional
 import uvicorn
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Query, Response
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Query, Response, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
@@ -13,6 +13,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 from models import User, Menu, Attendance, OvertimeRequest, engine
 from sqlalchemy.orm import sessionmaker
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+import pandas as pd
+import io
+from fastapi.responses import StreamingResponse
 
 # EKLENDİ: .env dosyasını okumak için gerekli kütüphaneler
 import os
@@ -60,6 +63,13 @@ class Token(BaseModel):
 
 class MenuCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    date: date
+    meal_type: str
+    menu_items: dict
+
+class MenuResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
     date: date
     meal_type: str
     menu_items: dict
@@ -240,7 +250,7 @@ async def delete_user(user_id: int, current_admin: User = Depends(get_current_ad
 async def get_all_users(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     return db.query(User).options(orm.joinedload(User.manager)).order_by(User.username).all()
 
-@app.get("/api/menus", response_model=List[MenuCreate])
+@app.get("/api/menus", response_model=List[MenuResponse])
 async def get_menus_by_date_range(start_date: date, end_date: date, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(Menu).filter(Menu.date >= start_date, Menu.date <= end_date).order_by(Menu.date).all()
 
@@ -289,7 +299,7 @@ async def get_manager_all_requests(status: str | None = None, current_user: User
         if status == "Beklemede":
             query = query.filter(OvertimeRequest.status.in_(["Yönetici Onayı Bekliyor", "İK Onayı Bekliyor"]))
         elif status == "Reddedildi":
-            query = query.filter(OvertimeRequest.status.in_(["Yönetici Tarafından Reddedildi", "Reddedildi"]))
+            query = query.filter(OvertimeRequest.status.in_(["Departman Yöneticisi Tarafından Reddedildi", "Reddedildi"]))
         else:
             query = query.filter(OvertimeRequest.status == status)
     return query.order_by(OvertimeRequest.date.desc()).all()
@@ -308,7 +318,7 @@ async def manager_action_on_request(request_id: int, action: str = Query(..., pa
         email_body = f"<p><b>{db_request.user.username}</b> personelinin fazla mesai talebi yöneticisi tarafından onaylanmış ve İK onayına sunulmuştur.</p>"
         background_tasks.add_task(send_overtime_notification, [hr_email], email_subject, email_body)
     else:
-        db_request.status = "Yönetici Tarafından Reddedildi"
+        db_request.status = "Departman Yöneticisi Tarafından Reddedildi"
         email_subject = "Fazla Mesai Talebiniz Reddedildi"
         email_body = f"<p>Merhaba {db_request.user.username},</p><p>Fazla mesai talebiniz yöneticiniz tarafından reddedilmiştir.</p>"
         background_tasks.add_task(send_overtime_notification, [user_email], email_subject, email_body)
@@ -322,7 +332,7 @@ async def get_all_overtime_requests(status: str | None = None, user_id: int | No
         if status == "Beklemede":
             query = query.filter(OvertimeRequest.status.in_(["Yönetici Onayı Bekliyor", "İK Onayı Bekliyor"]))
         elif status == "Reddedildi":
-            query = query.filter(OvertimeRequest.status.in_(["Yönetici Tarafından Reddedildi", "Reddedildi"]))
+            query = query.filter(OvertimeRequest.status.in_(["Departman Yöneticisi Tarafından Reddedildi", "Reddedildi"]))
         else:
             query = query.filter(OvertimeRequest.status == status)
     if user_id: query = query.filter(OvertimeRequest.user_id == user_id)
@@ -352,6 +362,47 @@ async def create_menu_plan(menu: MenuCreate, current_user: User = Depends(get_cu
     db.refresh(db_menu)
     return db_menu
 
+@app.delete("/api/menu/{menu_id}")
+async def delete_menu(menu_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    try:
+        menu = db.query(Menu).filter(Menu.id == menu_id).first()
+        if not menu:
+            raise HTTPException(status_code=404, detail="Menü bulunamadı")
+        
+        # Önce ilgili katılım kayıtlarını sil (sadece tarihe göre)
+        deleted_attendance = db.query(Attendance).filter(
+            Attendance.date == menu.date
+        ).delete(synchronize_session=False)
+        
+        # Menüyü sil
+        db.delete(menu)
+        
+        # Değişiklikleri veritabanına kaydet
+        db.commit()
+        
+        return {
+            "message": "Menü başarıyla silindi",
+            "deleted_menu_id": menu_id,
+            "deleted_attendance_count": deleted_attendance
+        }
+    except Exception as e:
+        db.rollback()
+        # Debug için hatayı loglayalım
+        print(f"Menü silme hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Menü silinirken hata oluştu: {str(e)}")
+
+# Debug endpoint - menülerin gerçekten silinip silinmediğini kontrol etmek için
+@app.get("/api/menu/{menu_id}/exists")
+async def check_menu_exists(menu_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    menu = db.query(Menu).filter(Menu.id == menu_id).first()
+    return {"exists": menu is not None, "menu_id": menu_id}
+
+# Debug endpoint - toplam menü sayısını kontrol etmek için
+@app.get("/api/menus/count")
+async def get_menu_count(current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    count = db.query(Menu).count()
+    return {"total_menus": count}
+
 @app.get("/api/stats/dashboard")
 async def get_dashboard_stats(current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     today = datetime.now().date()
@@ -362,6 +413,210 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_admin_use
 @app.get("/api/attendance/{report_date}", response_model=List[AttendanceOut])
 async def get_attendance_report(report_date: date, current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     return db.query(Attendance).options(orm.joinedload(Attendance.user)).filter(Attendance.date == report_date).all()
+
+# Kullanıcının kendi katılım durumlarını çekme endpoint'i
+@app.get("/api/attendance")
+async def get_user_attendance(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Kullanıcının belirtilen tarih aralığındaki katılım durumlarını çek"""
+    attendances = db.query(Attendance).filter(
+        Attendance.user_id == current_user.id,
+        Attendance.date >= start_date,
+        Attendance.date <= end_date
+    ).all()
+    
+    return [{"date": str(a.date), "will_attend": a.will_attend} for a in attendances]
+
+# --- EXCEL İŞLEME ENDPOINT'LERİ ---
+
+class ExcelImportResult(BaseModel):
+    success: bool
+    imported_count: int
+    updated_count: int
+    error_count: int
+    errors: List[str]
+
+@app.get("/api/menu/excel-template")
+async def download_excel_template(current_user: User = Depends(get_current_admin_user)):
+    """Excel şablonu indir"""
+    try:
+        # Şablon verisi oluştur
+        template_data = {
+            'Tarih': [
+                '2025-08-07',
+                '2025-08-08', 
+                '2025-08-09',
+                '2025-08-10',
+                '2025-08-11'
+            ],
+            'Çorba': [
+                'Mercimek Çorbası',
+                'Domates Çorbası',
+                'Yayla Çorbası', 
+                'Ezogelin Çorbası',
+                'Tarhana Çorbası'
+            ],
+            'Ana Yemek': [
+                'Tavuk Schnitzel',
+                'Köfte',
+                'Balık',
+                'Tavuk Sote',
+                'Mantı'
+            ],
+            'Yan Yemek': [
+                'Pilav',
+                'Makarna',
+                'Bulgur Pilavı',
+                'Patates Püresi',
+                'Nohut'
+            ],
+            'Tatlı': [
+                'Muhallebi',
+                'Sütlaç',
+                'Kazandibi',
+                'Baklava',
+                'Künefe'
+            ]
+        }
+        
+        # DataFrame oluştur
+        df = pd.DataFrame(template_data)
+        
+        # Excel dosyasını memory'de oluştur
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Menü Şablonu')
+        
+        output.seek(0)
+        
+        # Response olarak döndür
+        headers = {
+            'Content-Disposition': 'attachment; filename="menu_template.xlsx"'
+        }
+        
+        return StreamingResponse(
+            io.BytesIO(output.read()), 
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers=headers
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Şablon oluşturulurken hata: {str(e)}")
+
+@app.post("/api/menu/import-excel", response_model=ExcelImportResult)
+async def import_menu_from_excel(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Excel'den menü içe aktar"""
+    
+    # Dosya türü kontrolü
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(
+            status_code=400, 
+            detail="Sadece Excel dosyaları (.xlsx, .xls) kabul edilir"
+        )
+    
+    try:
+        # Dosyayı oku
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents), engine='openpyxl')
+        
+        # Sütun isimlerini kontrol et
+        required_columns = ['Tarih', 'Çorba', 'Ana Yemek', 'Yan Yemek', 'Tatlı']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Eksik sütunlar: {', '.join(missing_columns)}. Gerekli sütunlar: {', '.join(required_columns)}"
+            )
+        
+        # Veri doğrulama ve işleme
+        imported_count = 0
+        updated_count = 0
+        error_count = 0
+        errors = []
+        
+        try:
+            for index, row in df.iterrows():
+                try:
+                    # Tarih işleme
+                    date_value = row['Tarih']
+                    if pd.isna(date_value):
+                        errors.append(f"Satır {index + 2}: Tarih boş")
+                        error_count += 1
+                        continue
+                        
+                    # Tarih formatını parse et
+                    if isinstance(date_value, str):
+                        menu_date = pd.to_datetime(date_value).date()
+                    else:
+                        menu_date = date_value.date() if hasattr(date_value, 'date') else date_value
+                    
+                    # Mevcut menüyü kontrol et
+                    existing_menu = db.query(Menu).filter_by(
+                        date=menu_date, 
+                        meal_type="Öğle Yemeği"
+                    ).first()
+                    
+                    menu_items = {
+                        "Corbasi": str(row['Çorba']) if not pd.isna(row['Çorba']) else "",
+                        "Ana_Yemek": str(row['Ana Yemek']) if not pd.isna(row['Ana Yemek']) else "",
+                        "Yan_Yemek": str(row['Yan Yemek']) if not pd.isna(row['Yan Yemek']) else "",
+                        "Tatli": str(row['Tatlı']) if not pd.isna(row['Tatlı']) else ""
+                    }
+                    
+                    # En az bir yemek var mı kontrol et
+                    if not any(menu_items.values()):
+                        errors.append(f"Satır {index + 2}: Hiç yemek belirtilmemiş")
+                        error_count += 1
+                        continue
+                    
+                    if existing_menu:
+                        # Mevcut menüyü güncelle
+                        existing_menu.menu_items = menu_items
+                        updated_count += 1
+                    else:
+                        # Yeni menü ekle
+                        new_menu = Menu(
+                            date=menu_date,
+                            meal_type="Öğle Yemeği",
+                            menu_items=menu_items
+                        )
+                        db.add(new_menu)
+                        imported_count += 1
+                        
+                except Exception as e:
+                    errors.append(f"Satır {index + 2}: {str(e)}")
+                    error_count += 1
+                    continue
+            
+            db.commit()
+            
+            return ExcelImportResult(
+                success=True,
+                imported_count=imported_count,
+                updated_count=updated_count,
+                error_count=error_count,
+                errors=errors[:10]  # İlk 10 hatayı göster
+            )
+            
+        except Exception as e:
+            db.rollback()
+            raise e
+            
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=400, detail="Excel dosyası boş")
+    except pd.errors.ParserError:
+        raise HTTPException(status_code=400, detail="Excel dosyası okunamadı. Dosya formatını kontrol edin.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"İçe aktarma sırasında hata: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
